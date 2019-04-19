@@ -1,13 +1,14 @@
 package integration.chainadapter
 
+import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
 import com.d3.commons.sidechain.iroha.ReliableIrohaChainListener
+import com.d3.commons.util.createPrettySingleThreadPool
 import com.d3.commons.util.getRandomString
 import com.github.kittinunf.result.failure
 import integration.chainadapter.environment.ChainAdapterIntegrationTestEnvironment
 import mu.KLogging
 import org.junit.Assert.assertEquals
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import java.util.*
@@ -16,15 +17,9 @@ import java.util.*
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ChainAdapterIntegrationTest {
 
-    private lateinit var environment: ChainAdapterIntegrationTestEnvironment
+    private val environment = ChainAdapterIntegrationTestEnvironment()
 
-    @BeforeEach
-    fun setUp() {
-        environment = ChainAdapterIntegrationTestEnvironment()
-        environment.adapter.init().failure { ex -> throw ex }
-    }
-
-    @AfterEach
+    @AfterAll
     fun tearDown() {
         environment.close()
     }
@@ -41,25 +36,33 @@ class ChainAdapterIntegrationTest {
         val transactions = 10
         val queueName = String.getRandomString(5)
         val consumedBlocks = Collections.synchronizedList(ArrayList<Long>())
-        ReliableIrohaChainListener(
-            environment.rmqConfig,
-            queueName,
-            { block, _ -> consumedBlocks.add(block.blockV1.payload.height) },
-            environment.consumerExecutorService,
-            true
-        ).use { reliableChainListener ->
-            //Start consuming
-            reliableChainListener.getBlockObservable()
-            repeat(transactions) {
-                environment.createDummyTransaction()
+        environment.createAdapter().use { adapter ->
+            adapter.init().failure { ex -> throw ex }
+            ReliableIrohaChainListener(
+                adapter.rmqConfig,
+                queueName,
+                { block, _ -> consumedBlocks.add(block.blockV1.payload.height) },
+                createPrettySingleThreadPool(
+                    CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
+                ),
+                true
+            ).use { reliableChainListener ->
+                //Start consuming
+                reliableChainListener.getBlockObservable()
+                repeat(transactions) {
+                    environment.createDummyTransaction()
+                }
+                //Wait a little until consumed
+                Thread.sleep(2_000)
+                logger.info { consumedBlocks }
+                assertEquals(transactions, consumedBlocks.size)
+                assertEquals(consumedBlocks.sorted(), consumedBlocks)
+                assertEquals(
+                    adapter.getLastReadBlock(),
+                    adapter.lastReadBlockProvider.getLastBlockHeight()
+                )
+                assertEquals(consumedBlocks.last(), adapter.getLastReadBlock())
             }
-            //Wait a little until consumed
-            Thread.sleep(2_000)
-            logger.info { consumedBlocks }
-            assertEquals(transactions, consumedBlocks.size)
-            assertEquals(consumedBlocks.sorted(), consumedBlocks)
-            assertEquals(environment.adapter.getLastReadBlock(), environment.lastReadBlockProvider.getLastBlockHeight())
-            assertEquals(consumedBlocks.last(), environment.adapter.getLastReadBlock())
         }
     }
 
@@ -75,22 +78,27 @@ class ChainAdapterIntegrationTest {
         val transactions = 10
         val queueName = String.getRandomString(5)
         val consumedBlocks = Collections.synchronizedList(ArrayList<Long>())
-        ReliableIrohaChainListener(
-            environment.rmqConfig,
-            queueName,
-            { block, _ -> consumedBlocks.add(block.blockV1.payload.height) },
-            environment.consumerExecutorService,
-            false
-        ).use { reliableChainListener ->
-            //Start consuming
-            reliableChainListener.getBlockObservable()
-            repeat(transactions) {
-                environment.createDummyTransaction()
+        environment.createAdapter().use { adapter ->
+            adapter.init().failure { ex -> throw ex }
+            ReliableIrohaChainListener(
+                adapter.rmqConfig,
+                queueName,
+                { block, _ -> consumedBlocks.add(block.blockV1.payload.height) },
+                createPrettySingleThreadPool(
+                    CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
+                ),
+                false
+            ).use { reliableChainListener ->
+                //Start consuming
+                reliableChainListener.getBlockObservable()
+                repeat(transactions) {
+                    environment.createDummyTransaction()
+                }
+                //Wait a little until consumed
+                Thread.sleep(2_000)
+                logger.info { consumedBlocks }
+                assertEquals(1, consumedBlocks.size)
             }
-            //Wait a little until consumed
-            Thread.sleep(2_000)
-            logger.info { consumedBlocks }
-            assertEquals(1, consumedBlocks.size)
         }
     }
 
@@ -106,31 +114,35 @@ class ChainAdapterIntegrationTest {
         val transactions = 10
         val queueName = String.getRandomString(5)
         val consumedBlocks = Collections.synchronizedList(ArrayList<Long>())
-        ReliableIrohaChainListener(
-            environment.rmqConfig,
-            queueName,
-            { block, ack ->
-                consumedBlocks.add(block.blockV1.payload.height)
-                ack()
-            },
-            environment.consumerExecutorService,
-            false
-        ).use { reliableChainListener ->
-            //Start consuming
-            reliableChainListener.getBlockObservable()
-            repeat(transactions) {
-                environment.createDummyTransaction()
+        environment.createAdapter().use { adapter ->
+            adapter.init().failure { ex -> throw ex }
+            ReliableIrohaChainListener(
+                adapter.rmqConfig,
+                queueName,
+                { block, ack ->
+                    consumedBlocks.add(block.blockV1.payload.height)
+                    ack()
+                },
+                createPrettySingleThreadPool(
+                    CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
+                ),
+                false
+            ).use { reliableChainListener ->
+                //Start consuming
+                reliableChainListener.getBlockObservable()
+                repeat(transactions) {
+                    environment.createDummyTransaction()
+                }
+                //Wait a little until consumed
+                Thread.sleep(2_000)
+                logger.info { consumedBlocks }
+                assertEquals(transactions, consumedBlocks.size)
+                assertEquals(consumedBlocks.sorted(), consumedBlocks)
+                assertEquals(adapter.getLastReadBlock(), adapter.lastReadBlockProvider.getLastBlockHeight())
+                assertEquals(consumedBlocks.last(), adapter.getLastReadBlock())
             }
-            //Wait a little until consumed
-            Thread.sleep(2_000)
-            logger.info { consumedBlocks }
-            assertEquals(transactions, consumedBlocks.size)
-            assertEquals(consumedBlocks.sorted(), consumedBlocks)
-            assertEquals(environment.adapter.getLastReadBlock(), environment.lastReadBlockProvider.getLastBlockHeight())
-            assertEquals(consumedBlocks.last(), environment.adapter.getLastReadBlock())
         }
     }
-
 
     /**
      * Logger
