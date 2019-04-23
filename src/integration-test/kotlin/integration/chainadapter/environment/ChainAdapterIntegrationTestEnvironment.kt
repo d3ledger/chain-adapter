@@ -8,7 +8,6 @@ import com.d3.commons.config.RMQConfig
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
 import com.d3.commons.util.createPrettySingleThreadPool
-import com.rabbitmq.client.ConnectionFactory
 import integration.chainadapter.helper.ChainAdapterConfigHelper
 import io.grpc.ManagedChannelBuilder
 import iroha.protocol.BlockOuterClass
@@ -52,11 +51,14 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
     private val rmq = KGenericContainer("rabbitmq:3-management").withExposedPorts(DEFAULT_RMQ_PORT)
         .withFixedExposedPort(DEFAULT_RMQ_PORT, DEFAULT_RMQ_PORT)
 
+    private lateinit var irohaAPI: IrohaAPI
+
     init {
         rmq.start()
         // I don't want to see nasty Iroha logs
         irohaContainer.withLogger(null)
         irohaContainer.start()
+        irohaAPI=irohaContainer.api
     }
 
     /**
@@ -151,7 +153,7 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
             .builder("client@d3")
             .setAccountDetail("client@d3", testKey, dummyValue)
             .sign(dummyClientKeyPair)
-        irohaContainer.api.transaction(transactionBuilder.build())
+        irohaAPI.transaction(transactionBuilder.build())
             .blockingSubscribe(
                 TransactionStatusObserver.builder()
                     .onError { ex -> throw ex }
@@ -170,6 +172,7 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
     }
 
     override fun close() {
+        irohaAPI.close()
         irohaContainer.close()
         rmq.close()
     }
