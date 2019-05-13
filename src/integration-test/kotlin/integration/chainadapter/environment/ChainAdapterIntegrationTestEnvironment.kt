@@ -67,8 +67,9 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
     fun createChainAdapterContainer(): KGenericContainerImage {
         return KGenericContainerImage(
             ImageFromDockerfile()
-                .withFileFromFile("/build/libs/chain-adapter-all.jar", File(jarFile))
+                .withFileFromFile(jarFile, File(jarFile))
                 .withFileFromFile("Dockerfile", File(dockerfile))
+                .withBuildArg("JAR_FILE", jarFile)
         ).withLogConsumer { outputFrame -> print(outputFrame.utf8String) }.withNetworkMode("host")
     }
 
