@@ -14,7 +14,7 @@ pipeline {
                             .inside("-v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp") {
                         sh "gradle test --info"
                         sh "gradle compileIntegrationTestKotlin --info"
-                        sh "gradle chain-adapter:shadowJar"
+                        sh "gradle shadowJar"
                         sh "gradle integrationTest --info"
                     }
                 }
