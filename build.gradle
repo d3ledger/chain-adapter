@@ -10,9 +10,6 @@ buildscript {
     }
 }
 
-group = 'd3'
-version = '1.0-SNAPSHOT'
-
 repositories {
     mavenCentral()
     jcenter()
@@ -29,6 +26,7 @@ mainClassName='com.d3.chainadapter.ChainAdapterMain'
 shadowDistZip.classifier = 'shadow'
 shadowDistTar.classifier = 'shadow'
 
+shadowJar.archiveName = 'chain-adapter-all.jar'
 sourceSets {
     integrationTest {
         kotlin {
