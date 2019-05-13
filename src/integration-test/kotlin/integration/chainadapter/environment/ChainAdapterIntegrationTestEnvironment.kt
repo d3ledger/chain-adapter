@@ -58,7 +58,7 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
 
     val userDir = System.getProperty("user.dir")!!
     private val dockerfile = "$userDir/Dockerfile"
-    private val jarFile = "$userDir/build/libs/chain-adapter-all.jar123"
+    private val jarFile = "$userDir/build/libs/chain-adapter-all.jar"
 
     /**
      * Creates chain adapter docker container based on DockerFile
@@ -76,6 +76,8 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
     private val irohaAPI: IrohaAPI
 
     init {
+        println("USER DIR $userDir")
+        File(userDir).walkTopDown().forEach { println(it) }
         rmq.start()
         // I don't want to see nasty Iroha logs
         irohaContainer.withLogger(null)
