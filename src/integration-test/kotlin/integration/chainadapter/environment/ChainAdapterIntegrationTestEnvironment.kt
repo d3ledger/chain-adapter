@@ -75,6 +75,8 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
     private val irohaAPI: IrohaAPI
 
     init {
+        println("USER DIR $userDir")
+        File(userDir).walkTopDown().forEach { println(it) }
         rmq.start()
         // I don't want to see nasty Iroha logs
         irohaContainer.withLogger(null)
