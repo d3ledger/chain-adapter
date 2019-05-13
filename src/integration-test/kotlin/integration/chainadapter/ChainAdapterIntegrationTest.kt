@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import java.util.*
 
-
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ChainAdapterIntegrationTest {
 
@@ -37,7 +36,7 @@ class ChainAdapterIntegrationTest {
         val queueName = String.getRandomString(5)
         val consumedBlocks = Collections.synchronizedList(ArrayList<Long>())
         environment.createAdapter().use { adapter ->
-            adapter.init().failure { ex -> throw ex }
+            adapter.init {}.failure { ex -> throw ex }
             ReliableIrohaChainListener(
                 adapter.rmqConfig,
                 queueName,
@@ -79,7 +78,7 @@ class ChainAdapterIntegrationTest {
         val queueName = String.getRandomString(5)
         val consumedBlocks = Collections.synchronizedList(ArrayList<Long>())
         environment.createAdapter().use { adapter ->
-            adapter.init().failure { ex -> throw ex }
+            adapter.init {}.failure { ex -> throw ex }
             ReliableIrohaChainListener(
                 adapter.rmqConfig,
                 queueName,
@@ -115,7 +114,7 @@ class ChainAdapterIntegrationTest {
         val queueName = String.getRandomString(5)
         val consumedBlocks = Collections.synchronizedList(ArrayList<Long>())
         environment.createAdapter().use { adapter ->
-            adapter.init().failure { ex -> throw ex }
+            adapter.init {}.failure { ex -> throw ex }
             ReliableIrohaChainListener(
                 adapter.rmqConfig,
                 queueName,

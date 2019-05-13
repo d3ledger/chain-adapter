@@ -49,13 +49,6 @@ open class ChainAdapter(
 
     /**
      * Initiates and runs chain adapter
-     */
-    fun init(): Result<Unit, Exception> {
-        return init({})
-    }
-
-    /**
-     * Initiates and runs chain adapter
      * @param onIrohaListenError - function that will be called on Iroha chain listener error
      */
     fun init(onIrohaListenError: () -> Unit): Result<Unit, Exception> {

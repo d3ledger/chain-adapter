@@ -26,6 +26,7 @@ mainClassName='com.d3.chainadapter.ChainAdapterMain'
 shadowDistZip.classifier = 'shadow'
 shadowDistTar.classifier = 'shadow'
 
+shadowJar.archiveName = 'chain-adapter-all.jar'
 sourceSets {
     integrationTest {
         kotlin {
@@ -81,6 +82,7 @@ dependencies {
     }
     // to run both junit4 and junit5 tests
     testRuntime("org.junit.vintage:junit-vintage-engine:5.2.0")
+    testCompile group: 'org.testcontainers', name: 'testcontainers', version: '1.11.2'
     //Iroha-java related
     testCompile('com.github.hyperledger.iroha-java:testcontainers:4.0.0')
     testCompile('org.slf4j:slf4j-api:1.7.25')

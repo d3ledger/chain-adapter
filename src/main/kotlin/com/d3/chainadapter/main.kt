@@ -61,7 +61,10 @@ fun main(args: Array<String>) {
             irohaChainListener,
             FileBasedLastReadBlockProvider(rmqConfig)
         )
-        adapter.init { System.exit(1) }.fold(
+        adapter.init {
+            logger.error("Iroha failure. Exit.")
+            System.exit(1)
+        }.fold(
             { logger.info("Chain adapter has been started") },
             { ex ->
                 adapter.close()
