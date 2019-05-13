@@ -66,7 +66,7 @@ class ChainAdapterUnreadIntegrationTest {
                     transactionsCount++
                 }
                 // Start
-                adapter.init().failure { ex -> throw ex }
+                adapter.init {}.failure { ex -> throw ex }
                 // After start
                 logger.info { "Start send dummy transactions after service start" }
                 repeat(transactionsAfterStart) {

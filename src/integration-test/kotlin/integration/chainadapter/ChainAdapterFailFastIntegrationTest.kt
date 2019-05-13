@@ -1,0 +1,66 @@
+package integration.chainadapter
+
+import integration.chainadapter.environment.ChainAdapterIntegrationTestEnvironment
+import org.junit.jupiter.api.*
+import org.testcontainers.containers.BindMode
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class ChainAdapterFailFastIntegrationTest {
+
+    private val environment = ChainAdapterIntegrationTestEnvironment()
+    private val chainAdapterContainer = environment.createChainAdapterContainer()
+
+    @BeforeAll
+    fun setUp() {
+        // Mount configs
+        chainAdapterContainer.addFileSystemBind(
+            "${environment.userDir}/configs/",
+            "/opt/chain-adapter/configs",
+            BindMode.READ_ONLY
+        )
+        // Mount Iroha keys
+        chainAdapterContainer.addFileSystemBind(
+            "${environment.userDir}/deploy/iroha/keys/",
+            "/opt/chain-adapter/deploy/iroha/keys",
+            BindMode.READ_ONLY
+        )
+
+        // Mount last read block file
+        chainAdapterContainer.addFileSystemBind(
+            environment.chainAdapterConfigHelper.createTestLastReadBlockFile(),
+            "/opt/chain-adapter/deploy/chain-adapter/last_read_block.txt",
+            BindMode.READ_WRITE
+        )
+
+        // Set RMQ host
+        chainAdapterContainer.addEnv("RMQ_HOST", "localhost")
+        // Set Iroha host and port
+        chainAdapterContainer.addEnv("RMQ_IROHA_HOSTNAME", "localhost")
+        chainAdapterContainer.addEnv("RMQ_IROHA_PORT", environment.irohaContainer.toriiAddress.port.toString())
+        chainAdapterContainer.start()
+    }
+
+    @AfterAll
+    fun tearDown() {
+        chainAdapterContainer.stop()
+        environment.close()
+    }
+
+    /**
+     * @given chain adapter and Iroha services being started
+     * @when Iroha dies
+     * @then chain adapter dies as well
+     */
+    @Test
+    fun testFailFast() {
+        // Let the service work a little
+        Thread.sleep(15_000)
+        Assertions.assertTrue(chainAdapterContainer.isRunning)
+        // Kill Iroha
+        environment.irohaContainer.stop()
+        // Wait a little
+        Thread.sleep(5_000)
+        // Check that the service is dead
+        Assertions.assertFalse(chainAdapterContainer.isRunning)
+    }
+}

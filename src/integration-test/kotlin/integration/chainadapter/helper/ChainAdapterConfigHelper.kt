@@ -33,7 +33,7 @@ class ChainAdapterConfigHelper {
     /**
      * Creates randomly named file for last read block height storage
      */
-    private fun createTestLastReadBlockFile(): String {
+    fun createTestLastReadBlockFile(): String {
         // Random file
         val file = File("$LAST_READ_BLOCK_TEST_FOLDER/last_block_${random.nextInt().absoluteValue}.txt")
         val folder = File(file.parentFile.absolutePath)

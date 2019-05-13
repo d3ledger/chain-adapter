@@ -1,4 +1,4 @@
-FROM openjdk:8-jre
+FROM openjdk:8u181-jre-alpine
 
 WORKDIR /opt/chain-adapter
 
