@@ -1,8 +1,7 @@
 FROM openjdk:8u181-jre-alpine
 
 WORKDIR /opt/chain-adapter
-ARG JAR_FILE
-COPY ${JAR_FILE} /opt/chain-adapter/chain-adapter.jar
+COPY /build/libs/chain-adapter-all.jar /opt/chain-adapter/chain-adapter.jar
 
 ## Wait for script (see https://github.com/ufoscout/docker-compose-wait/)
 

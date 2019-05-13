@@ -69,15 +69,12 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
             ImageFromDockerfile()
                 .withFileFromFile(jarFile, File(jarFile))
                 .withFileFromFile("Dockerfile", File(dockerfile))
-                .withBuildArg("JAR_FILE", jarFile)
         ).withLogConsumer { outputFrame -> print(outputFrame.utf8String) }.withNetworkMode("host")
     }
 
     private val irohaAPI: IrohaAPI
 
     init {
-        println("USER DIR $userDir")
-        File(userDir).walkTopDown().forEach { println(it) }
         rmq.start()
         // I don't want to see nasty Iroha logs
         irohaContainer.withLogger(null)
