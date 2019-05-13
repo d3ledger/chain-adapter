@@ -58,7 +58,7 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
 
     val userDir = System.getProperty("user.dir")!!
     private val dockerfile = "$userDir/Dockerfile"
-    private val jarFile = "$userDir/build/libs/chain-adapter-all.jar"
+    private val jarFile = "$userDir/build/libs/chain-adapter-all.jar123"
 
     /**
      * Creates chain adapter docker container based on DockerFile
