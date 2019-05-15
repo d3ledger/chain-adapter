@@ -4,7 +4,6 @@ import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
 import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.chainadapter.provider.LastReadBlockProvider
 import com.d3.commons.sidechain.iroha.IrohaChainListener
-import com.d3.commons.sidechain.iroha.util.getBlockRawResponse
 import com.d3.commons.sidechain.iroha.util.getErrorMessage
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.github.kittinunf.result.Result
@@ -15,6 +14,7 @@ import com.rabbitmq.client.MessageProperties
 import io.reactivex.schedulers.Schedulers
 import iroha.protocol.BlockOuterClass
 import iroha.protocol.QryResponses
+import jp.co.soramitsu.iroha.java.Query
 import jp.co.soramitsu.iroha.java.QueryAPI
 import mu.KLogging
 import java.io.Closeable
@@ -136,6 +136,20 @@ open class ChainAdapter(
         // Save last read block
         lastReadBlockProvider.saveLastBlockHeight(height)
         lastReadBlock.set(height)
+    }
+
+    /**
+     * Returns raw query response with Iroha block.
+     * May be used to handle Iroha error codes manually
+     * @param queryAPI - Iroha queries network layer
+     * @param height - height of Iroha block to get
+     * @return Iroha block
+     */
+    private fun getBlockRawResponse(queryAPI: QueryAPI, height: Long): QryResponses.QueryResponse {
+        val q = Query.builder(queryAPI.accountId, 1L)
+            .getBlock(height)
+            .buildSigned(queryAPI.keyPair)
+        return queryAPI.api.query(q);
     }
 
     /**

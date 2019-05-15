@@ -5,8 +5,6 @@ import com.d3.chainadapter.adapter.ChainAdapter
 import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.chainadapter.provider.FileBasedLastReadBlockProvider
 import com.d3.chainadapter.provider.LastReadBlockProvider
-import com.d3.commons.config.IrohaConfig
-import com.d3.commons.config.IrohaCredentialConfig
 import com.d3.commons.config.RMQConfig
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
@@ -209,10 +207,8 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
     fun mapToRMQConfig(chainAdapterConfig: ChainAdapterConfig): RMQConfig {
         return object : RMQConfig {
             override val host = chainAdapterConfig.rmqHost
-            override val iroha = chainAdapterConfig.iroha
-            override val irohaCredential = chainAdapterConfig.irohaCredential
+            override val port = chainAdapterConfig.rmqPort
             override val irohaExchange = chainAdapterConfig.irohaExchange
-            override val lastReadBlockFilePath = chainAdapterConfig.lastReadBlockFilePath
         }
     }
 
