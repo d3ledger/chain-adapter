@@ -2,8 +2,11 @@ package integration.chainadapter.environment
 
 import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
 import com.d3.chainadapter.adapter.ChainAdapter
+import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.chainadapter.provider.FileBasedLastReadBlockProvider
 import com.d3.chainadapter.provider.LastReadBlockProvider
+import com.d3.commons.config.IrohaConfig
+import com.d3.commons.config.IrohaCredentialConfig
 import com.d3.commons.config.RMQConfig
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
@@ -32,7 +35,7 @@ import kotlin.math.absoluteValue
 
 
 private val random = Random()
-private const val DEFAULT_RMQ_PORT = 5672
+const val DEFAULT_RMQ_PORT = 5672
 
 /**
  * Chain adapter test environment
@@ -53,9 +56,10 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
 
     val irohaContainer = IrohaContainer().withPeerConfig(getPeerConfig())
 
-    private val rmq = KGenericContainer("rabbitmq:3-management").withExposedPorts(DEFAULT_RMQ_PORT)
-        .withFixedExposedPort(DEFAULT_RMQ_PORT, DEFAULT_RMQ_PORT)
-
+    private val rmq =
+        KGenericContainer("rabbitmq:3-management").withExposedPorts(DEFAULT_RMQ_PORT).withFixedExposedPort(
+            DEFAULT_RMQ_PORT, DEFAULT_RMQ_PORT
+        )
     val userDir = System.getProperty("user.dir")!!
     private val dockerfile = "$userDir/Dockerfile"
     private val jarFile = "$userDir/build/libs/chain-adapter-all.jar"
@@ -126,21 +130,25 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
      * Creates ChainAdapter
      */
     fun createAdapter(): OpenChainAdapter {
-        val rmqConfig = chainAdapterConfigHelper.createRmqConfig(rmq.containerIpAddress)
+        val chainAdapterConfig =
+            chainAdapterConfigHelper.createChainAdapterConfig(
+                rmq.containerIpAddress,
+                rmq.getMappedPort(DEFAULT_RMQ_PORT)
+            )
         val irohaAPI = irohaAPI()
-        val lastReadBlockProvider = FileBasedLastReadBlockProvider(rmqConfig)
+        val lastReadBlockProvider = FileBasedLastReadBlockProvider(chainAdapterConfig)
         val queryAPI =
             QueryAPI(
                 irohaAPI,
-                rmqConfig.irohaCredential.accountId,
+                chainAdapterConfig.irohaCredential.accountId,
                 rmqKeyPair
             )
         val irohaChainListener = IrohaChainListener(
             irohaAPI,
-            IrohaCredential(rmqConfig.irohaCredential.accountId, rmqKeyPair)
+            IrohaCredential(chainAdapterConfig.irohaCredential.accountId, rmqKeyPair)
         )
         return OpenChainAdapter(
-            rmqConfig,
+            chainAdapterConfig,
             queryAPI,
             irohaChainListener,
             lastReadBlockProvider
@@ -193,6 +201,21 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
         return command.hasSetAccountDetail() && command.setAccountDetail.value == dummyValue
     }
 
+    /**
+     * Maps ChainAdapterConfig to RMQConfig
+     * @param chainAdapterConfig - config to map
+     * @return RMQConfig based on [chainAdapterConfig]
+     */
+    fun mapToRMQConfig(chainAdapterConfig: ChainAdapterConfig): RMQConfig {
+        return object : RMQConfig {
+            override val host = chainAdapterConfig.rmqHost
+            override val iroha = chainAdapterConfig.iroha
+            override val irohaCredential = chainAdapterConfig.irohaCredential
+            override val irohaExchange = chainAdapterConfig.irohaExchange
+            override val lastReadBlockFilePath = chainAdapterConfig.lastReadBlockFilePath
+        }
+    }
+
     override fun close() {
         irohaAPI.close()
         irohaContainer.close()
@@ -213,8 +236,8 @@ class KGenericContainerImage(image: ImageFromDockerfile) : GenericContainer<KGen
  * that are private in the original class
  */
 class OpenChainAdapter(
-    val rmqConfig: RMQConfig,
+    val chainAdapterConfig: ChainAdapterConfig,
     queryAPI: QueryAPI,
     irohaChainListener: IrohaChainListener,
     val lastReadBlockProvider: LastReadBlockProvider
-) : ChainAdapter(rmqConfig, queryAPI, irohaChainListener, lastReadBlockProvider)
+) : ChainAdapter(chainAdapterConfig, queryAPI, irohaChainListener, lastReadBlockProvider)

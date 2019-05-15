@@ -1,6 +1,6 @@
 package integration.chainadapter.helper
 
-import com.d3.commons.config.RMQConfig
+import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.commons.config.getConfigFolder
 import com.d3.commons.config.loadRawConfigs
 import java.io.File
@@ -16,16 +16,21 @@ private val random = Random()
 class ChainAdapterConfigHelper {
 
     /**
-     * Creates RabbitMQ config
+     * Creates chain adapter config
      */
-    fun createRmqConfig(rmqHost:String): RMQConfig {
-        val rmqConfig = loadRawConfigs("rmq", RMQConfig::class.java, "${getConfigFolder()}/rmq.properties")
-        return object : RMQConfig {
-            override val host = rmqHost
+    fun createChainAdapterConfig(rmqHost: String, rmqPort: Int): ChainAdapterConfig {
+        val chainAdapterConfig = loadRawConfigs(
+            "chain-adapter",
+            ChainAdapterConfig::class.java,
+            "${getConfigFolder()}/chain-adapter.properties"
+        )
+        return object : ChainAdapterConfig {
+            override val rmqHost = rmqHost
+            override val rmqPort = rmqPort
             // Random exchange
             override val irohaExchange = random.nextInt().absoluteValue.toString()
-            override val irohaCredential = rmqConfig.irohaCredential
-            override val iroha = rmqConfig.iroha
+            override val irohaCredential = chainAdapterConfig.irohaCredential
+            override val iroha = chainAdapterConfig.iroha
             override val lastReadBlockFilePath = createTestLastReadBlockFile()
         }
     }

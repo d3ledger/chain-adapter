@@ -1,6 +1,6 @@
 package com.d3.chainadapter.provider
 
-import com.d3.commons.config.RMQConfig
+import com.d3.chainadapter.config.ChainAdapterConfig
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -10,7 +10,7 @@ import java.util.*
 /**
  * File based last processed Iroha block reader
  */
-class FileBasedLastReadBlockProvider(private val rmqConfig: RMQConfig) : LastReadBlockProvider {
+class FileBasedLastReadBlockProvider(private val chainAdapterConfig: ChainAdapterConfig) : LastReadBlockProvider {
 
     /**
      * Returns last processed block
@@ -18,7 +18,7 @@ class FileBasedLastReadBlockProvider(private val rmqConfig: RMQConfig) : LastRea
      */
     @Synchronized
     override fun getLastBlockHeight(): Long {
-        Scanner(File(rmqConfig.lastReadBlockFilePath)).use { scanner ->
+        Scanner(File(chainAdapterConfig.lastReadBlockFilePath)).use { scanner ->
             return if (scanner.hasNextLine()) {
                 scanner.next().toLong()
             } else {
@@ -33,7 +33,7 @@ class FileBasedLastReadBlockProvider(private val rmqConfig: RMQConfig) : LastRea
      */
     @Synchronized
     override fun saveLastBlockHeight(height: Long) {
-        FileWriter(File(rmqConfig.lastReadBlockFilePath)).use { fileWriter ->
+        FileWriter(File(chainAdapterConfig.lastReadBlockFilePath)).use { fileWriter ->
             BufferedWriter(fileWriter).use { writer ->
                 writer.write(height.toString())
             }

@@ -3,6 +3,7 @@
 package com.d3.chainadapter
 
 import com.d3.chainadapter.adapter.ChainAdapter
+import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.chainadapter.provider.FileBasedLastReadBlockProvider
 import com.d3.commons.config.RMQConfig
 import com.d3.commons.config.getConfigFolder
@@ -25,19 +26,19 @@ const val CHAIN_ADAPTER_SERVICE_NAME = "chain-adapter"
 
 //TODO Springify
 fun main(args: Array<String>) {
-    val rmqConfig = loadRawConfigs("rmq", RMQConfig::class.java, "${getConfigFolder()}/rmq.properties")
+    val chainAdapterConfig = loadRawConfigs("chain-adapter", ChainAdapterConfig::class.java, "${getConfigFolder()}/chain-adapter.properties")
 
-    val irohaCredential = rmqConfig.irohaCredential
+    val irohaCredential = chainAdapterConfig.irohaCredential
     ModelUtil.loadKeypair(irohaCredential.pubkeyPath, irohaCredential.privkeyPath).map { keyPair ->
-        createLastReadBlockFile(rmqConfig)
+        createLastReadBlockFile(chainAdapterConfig)
         /**
          * It's essential to handle blocks in this service one-by-one.
          * This is why we explicitly set single threaded executor.
          */
-        val irohaAPI = IrohaAPI(rmqConfig.iroha.hostname, rmqConfig.iroha.port)
+        val irohaAPI = IrohaAPI(chainAdapterConfig.iroha.hostname, chainAdapterConfig.iroha.port)
         irohaAPI.setChannelForStreamingQueryStub(
             ManagedChannelBuilder.forAddress(
-                rmqConfig.iroha.hostname, rmqConfig.iroha.port
+                chainAdapterConfig.iroha.hostname, chainAdapterConfig.iroha.port
             ).executor(
                 createPrettySingleThreadPool(
                     CHAIN_ADAPTER_SERVICE_NAME,
@@ -56,10 +57,10 @@ fun main(args: Array<String>) {
             IrohaCredential(irohaCredential.accountId, keyPair)
         )
         val adapter = ChainAdapter(
-            rmqConfig,
+            chainAdapterConfig,
             queryAPI,
             irohaChainListener,
-            FileBasedLastReadBlockProvider(rmqConfig)
+            FileBasedLastReadBlockProvider(chainAdapterConfig)
         )
         adapter.init {
             logger.error("Iroha failure. Exit.")
@@ -80,8 +81,8 @@ fun main(args: Array<String>) {
  * Creates last read block file
  * @param rmqConfig - RabbitMQ config
  */
-private fun createLastReadBlockFile(rmqConfig: RMQConfig) {
-    val file = File(rmqConfig.lastReadBlockFilePath)
+private fun createLastReadBlockFile(chainAdapterConfig: ChainAdapterConfig) {
+    val file = File(chainAdapterConfig.lastReadBlockFilePath)
     if (file.exists()) {
         //No need to create
         return
