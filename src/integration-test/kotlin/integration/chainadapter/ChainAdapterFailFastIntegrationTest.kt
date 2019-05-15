@@ -1,6 +1,7 @@
 package integration.chainadapter
 
 import integration.chainadapter.environment.ChainAdapterIntegrationTestEnvironment
+import integration.chainadapter.environment.DEFAULT_RMQ_PORT
 import org.junit.jupiter.api.*
 import org.testcontainers.containers.BindMode
 
@@ -33,10 +34,14 @@ class ChainAdapterFailFastIntegrationTest {
         )
 
         // Set RMQ host
-        chainAdapterContainer.addEnv("RMQ_HOST", "localhost")
+        chainAdapterContainer.addEnv("CHAIN-ADAPTER_RMQHOST", "localhost")
+        chainAdapterContainer.addEnv("CHAIN-ADAPTER_RMQPORT", DEFAULT_RMQ_PORT.toString())
         // Set Iroha host and port
-        chainAdapterContainer.addEnv("RMQ_IROHA_HOSTNAME", "localhost")
-        chainAdapterContainer.addEnv("RMQ_IROHA_PORT", environment.irohaContainer.toriiAddress.port.toString())
+        chainAdapterContainer.addEnv("CHAIN-ADAPTER_IROHA_HOSTNAME", "localhost")
+        chainAdapterContainer.addEnv(
+            "CHAIN-ADAPTER_IROHA_PORT",
+            environment.irohaContainer.toriiAddress.port.toString()
+        )
         chainAdapterContainer.start()
     }
 

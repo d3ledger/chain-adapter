@@ -39,7 +39,7 @@ class ChainAdapterUnreadIntegrationTest {
         val consumedTransactions = Collections.synchronizedList(ArrayList<Long>())
         environment.createAdapter().use { adapter ->
             ReliableIrohaChainListener(
-                adapter.rmqConfig,
+                environment.mapToRMQConfig(adapter.chainAdapterConfig),
                 queueName,
                 { block, _ ->
                     block.blockV1.payload.transactionsList.forEach { tx ->

@@ -1,8 +1,8 @@
 package com.d3.chainadapter.adapter
 
 import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
+import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.chainadapter.provider.LastReadBlockProvider
-import com.d3.commons.config.RMQConfig
 import com.d3.commons.sidechain.iroha.IrohaChainListener
 import com.d3.commons.sidechain.iroha.util.getBlockRawResponse
 import com.d3.commons.sidechain.iroha.util.getErrorMessage
@@ -28,7 +28,7 @@ private const val BAD_IROHA_BLOCK_HEIGHT_ERROR_CODE = 3
  * It reads Iroha blocks and sends them to recipients via RabbitMQ
  */
 open class ChainAdapter(
-    private val rmqConfig: RMQConfig,
+    private val chainAdapterConfig: ChainAdapterConfig,
     private val queryAPI: QueryAPI,
     private val irohaChainListener: IrohaChainListener,
     private val lastReadBlockProvider: LastReadBlockProvider
@@ -42,7 +42,8 @@ open class ChainAdapter(
     )
 
     init {
-        connectionFactory.host = rmqConfig.host
+        connectionFactory.host = chainAdapterConfig.rmqHost
+        connectionFactory.port = chainAdapterConfig.rmqPort
     }
 
     private val connection = connectionFactory.newConnection()
@@ -55,7 +56,7 @@ open class ChainAdapter(
         return Result.of {
             lastReadBlock.set(lastReadBlockProvider.getLastBlockHeight())
             val channel = connection.createChannel()
-            channel.exchangeDeclare(rmqConfig.irohaExchange, "fanout", true)
+            channel.exchangeDeclare(chainAdapterConfig.irohaExchange, "fanout", true)
             logger.info { "Listening Iroha blocks" }
             initIrohaChainListener(channel, onIrohaListenError)
             publishUnreadIrohaBlocks(channel)
@@ -125,7 +126,7 @@ open class ChainAdapter(
     private fun onNewBlock(channel: Channel, block: BlockOuterClass.Block) {
         val message = block.toByteArray()
         channel.basicPublish(
-            rmqConfig.irohaExchange,
+            chainAdapterConfig.irohaExchange,
             "",
             MessageProperties.MINIMAL_PERSISTENT_BASIC,
             message

@@ -38,7 +38,7 @@ class ChainAdapterIntegrationTest {
         environment.createAdapter().use { adapter ->
             adapter.init {}.failure { ex -> throw ex }
             ReliableIrohaChainListener(
-                adapter.rmqConfig,
+                environment.mapToRMQConfig(adapter.chainAdapterConfig),
                 queueName,
                 { block, _ -> consumedBlocks.add(block.blockV1.payload.height) },
                 createPrettySingleThreadPool(
@@ -80,7 +80,7 @@ class ChainAdapterIntegrationTest {
         environment.createAdapter().use { adapter ->
             adapter.init {}.failure { ex -> throw ex }
             ReliableIrohaChainListener(
-                adapter.rmqConfig,
+                environment.mapToRMQConfig(adapter.chainAdapterConfig),
                 queueName,
                 { block, _ -> consumedBlocks.add(block.blockV1.payload.height) },
                 createPrettySingleThreadPool(
@@ -116,7 +116,7 @@ class ChainAdapterIntegrationTest {
         environment.createAdapter().use { adapter ->
             adapter.init {}.failure { ex -> throw ex }
             ReliableIrohaChainListener(
-                adapter.rmqConfig,
+                environment.mapToRMQConfig(adapter.chainAdapterConfig),
                 queueName,
                 { block, ack ->
                     consumedBlocks.add(block.blockV1.payload.height)
