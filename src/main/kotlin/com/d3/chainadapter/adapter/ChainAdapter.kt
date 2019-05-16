@@ -4,7 +4,7 @@ import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
 import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.chainadapter.provider.LastReadBlockProvider
 import com.d3.commons.sidechain.iroha.IrohaChainListener
-import com.d3.commons.sidechain.iroha.util.getBlockRawResponse
+import com.d3.commons.sidechain.iroha.util.IrohaQueryHelper
 import com.d3.commons.sidechain.iroha.util.getErrorMessage
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.github.kittinunf.result.Result
@@ -15,7 +15,7 @@ import com.rabbitmq.client.MessageProperties
 import io.reactivex.schedulers.Schedulers
 import iroha.protocol.BlockOuterClass
 import iroha.protocol.QryResponses
-import jp.co.soramitsu.iroha.java.QueryAPI
+import jp.co.soramitsu.iroha.java.ErrorResponseException
 import mu.KLogging
 import java.io.Closeable
 import java.util.concurrent.CountDownLatch
@@ -29,7 +29,7 @@ private const val BAD_IROHA_BLOCK_HEIGHT_ERROR_CODE = 3
  */
 open class ChainAdapter(
     private val chainAdapterConfig: ChainAdapterConfig,
-    private val queryAPI: QueryAPI,
+    private val irohaQueryHelper: IrohaQueryHelper,
     private val irohaChainListener: IrohaChainListener,
     private val lastReadBlockProvider: LastReadBlockProvider
 ) : Closeable {
@@ -91,21 +91,26 @@ open class ChainAdapter(
      */
     private fun publishUnreadIrohaBlocks(channel: Channel) {
         var lastProcessedBlock = lastReadBlockProvider.getLastBlockHeight()
-        while (true) {
+        var donePublishing = false
+        while (!donePublishing) {
             lastProcessedBlock++
             logger.info { "Try read Iroha block $lastProcessedBlock" }
-            val response = getBlockRawResponse(queryAPI, lastProcessedBlock)
-            if (response.hasErrorResponse()) {
-                val errorResponse = response.errorResponse
-                if (isNoMoreBlocksError(errorResponse)) {
-                    logger.info { "Done publishing unread blocks" }
-                    break
+
+            irohaQueryHelper.getBlock(lastProcessedBlock).fold({ response ->
+                onNewBlock(channel, response.block)
+            }, { ex ->
+                if (ex is ErrorResponseException) {
+                    val errorResponse = ex.errorResponse
+                    if (isNoMoreBlocksError(errorResponse)) {
+                        logger.info { "Done publishing unread blocks" }
+                        donePublishing = true
+                    } else {
+                        throw Exception("Cannot get block. ${getErrorMessage(errorResponse)}")
+                    }
                 } else {
-                    throw Exception("Cannot get block. ${getErrorMessage(errorResponse)}")
+                    throw ex
                 }
-            } else if (response.hasBlockResponse()) {
-                onNewBlock(channel, response.blockResponse!!.block)
-            }
+            })
         }
         publishUnreadLatch.countDown()
     }
@@ -145,7 +150,6 @@ open class ChainAdapter(
 
     override fun close() {
         subscriberExecutorService.shutdownNow()
-        queryAPI.api.close()
         irohaChainListener.close()
         connection.close()
     }

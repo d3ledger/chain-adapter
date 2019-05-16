@@ -44,7 +44,8 @@ class ChainAdapterIntegrationTest {
                 createPrettySingleThreadPool(
                     CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
                 ),
-                true
+                autoAck = true,
+                onRmqFail = {}
             ).use { reliableChainListener ->
                 //Start consuming
                 reliableChainListener.getBlockObservable()
@@ -86,7 +87,8 @@ class ChainAdapterIntegrationTest {
                 createPrettySingleThreadPool(
                     CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
                 ),
-                false
+                autoAck = false,
+                onRmqFail = {}
             ).use { reliableChainListener ->
                 //Start consuming
                 reliableChainListener.getBlockObservable()
@@ -125,7 +127,8 @@ class ChainAdapterIntegrationTest {
                 createPrettySingleThreadPool(
                     CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
                 ),
-                false
+                autoAck = false,
+                onRmqFail = {}
             ).use { reliableChainListener ->
                 //Start consuming
                 reliableChainListener.getBlockObservable()

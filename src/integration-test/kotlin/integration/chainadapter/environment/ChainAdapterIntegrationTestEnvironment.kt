@@ -5,12 +5,11 @@ import com.d3.chainadapter.adapter.ChainAdapter
 import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.chainadapter.provider.FileBasedLastReadBlockProvider
 import com.d3.chainadapter.provider.LastReadBlockProvider
-import com.d3.commons.config.IrohaConfig
-import com.d3.commons.config.IrohaCredentialConfig
 import com.d3.commons.config.RMQConfig
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
 import com.d3.commons.sidechain.iroha.util.ModelUtil
+import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
 import com.d3.commons.util.createPrettySingleThreadPool
 import integration.chainadapter.helper.ChainAdapterConfigHelper
 import io.grpc.ManagedChannelBuilder
@@ -209,10 +208,8 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
     fun mapToRMQConfig(chainAdapterConfig: ChainAdapterConfig): RMQConfig {
         return object : RMQConfig {
             override val host = chainAdapterConfig.rmqHost
-            override val iroha = chainAdapterConfig.iroha
-            override val irohaCredential = chainAdapterConfig.irohaCredential
+            override val port = chainAdapterConfig.rmqPort
             override val irohaExchange = chainAdapterConfig.irohaExchange
-            override val lastReadBlockFilePath = chainAdapterConfig.lastReadBlockFilePath
         }
     }
 
@@ -240,4 +237,4 @@ class OpenChainAdapter(
     queryAPI: QueryAPI,
     irohaChainListener: IrohaChainListener,
     val lastReadBlockProvider: LastReadBlockProvider
-) : ChainAdapter(chainAdapterConfig, queryAPI, irohaChainListener, lastReadBlockProvider)
+) : ChainAdapter(chainAdapterConfig, IrohaQueryHelperImpl(queryAPI), irohaChainListener, lastReadBlockProvider)
