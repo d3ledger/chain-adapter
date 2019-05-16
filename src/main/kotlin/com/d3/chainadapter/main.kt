@@ -5,12 +5,12 @@ package com.d3.chainadapter
 import com.d3.chainadapter.adapter.ChainAdapter
 import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.chainadapter.provider.FileBasedLastReadBlockProvider
-import com.d3.commons.config.RMQConfig
 import com.d3.commons.config.getConfigFolder
 import com.d3.commons.config.loadRawConfigs
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
 import com.d3.commons.sidechain.iroha.util.ModelUtil
+import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.github.kittinunf.result.failure
 import com.github.kittinunf.result.map
@@ -26,7 +26,8 @@ const val CHAIN_ADAPTER_SERVICE_NAME = "chain-adapter"
 
 //TODO Springify
 fun main(args: Array<String>) {
-    val chainAdapterConfig = loadRawConfigs("chain-adapter", ChainAdapterConfig::class.java, "${getConfigFolder()}/chain-adapter.properties")
+    val chainAdapterConfig =
+        loadRawConfigs("chain-adapter", ChainAdapterConfig::class.java, "${getConfigFolder()}/chain-adapter.properties")
 
     val irohaCredential = chainAdapterConfig.irohaCredential
     ModelUtil.loadKeypair(irohaCredential.pubkeyPath, irohaCredential.privkeyPath).map { keyPair ->
@@ -58,7 +59,7 @@ fun main(args: Array<String>) {
         )
         val adapter = ChainAdapter(
             chainAdapterConfig,
-            queryAPI,
+            IrohaQueryHelperImpl(queryAPI),
             irohaChainListener,
             FileBasedLastReadBlockProvider(chainAdapterConfig)
         )

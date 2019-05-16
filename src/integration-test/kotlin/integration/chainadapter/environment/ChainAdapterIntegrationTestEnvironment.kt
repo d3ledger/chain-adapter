@@ -9,6 +9,7 @@ import com.d3.commons.config.RMQConfig
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
 import com.d3.commons.sidechain.iroha.util.ModelUtil
+import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
 import com.d3.commons.util.createPrettySingleThreadPool
 import integration.chainadapter.helper.ChainAdapterConfigHelper
 import io.grpc.ManagedChannelBuilder
@@ -236,4 +237,4 @@ class OpenChainAdapter(
     queryAPI: QueryAPI,
     irohaChainListener: IrohaChainListener,
     val lastReadBlockProvider: LastReadBlockProvider
-) : ChainAdapter(chainAdapterConfig, queryAPI, irohaChainListener, lastReadBlockProvider)
+) : ChainAdapter(chainAdapterConfig, IrohaQueryHelperImpl(queryAPI), irohaChainListener, lastReadBlockProvider)
