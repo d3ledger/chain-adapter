@@ -37,7 +37,7 @@ fun main(args: Array<String>) {
         createLastReadBlockFile(chainAdapterConfig)
         val lastReadBlockProvider = FileBasedLastReadBlockProvider(chainAdapterConfig)
         if (chainAdapterConfig.dropLastReadBlock)
-            lastReadBlockProvider.dropLastBlockHeight()
+            lastReadBlockProvider.saveLastBlockHeight(0)
 
         /**
          * It's essential to handle blocks in this service one-by-one.

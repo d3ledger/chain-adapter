@@ -6,11 +6,11 @@ import java.io.File
 import java.io.FileWriter
 import java.util.*
 
-
 /**
  * File based last processed Iroha block reader
  */
-class FileBasedLastReadBlockProvider(private val chainAdapterConfig: ChainAdapterConfig) : LastReadBlockProvider {
+class FileBasedLastReadBlockProvider(private val chainAdapterConfig: ChainAdapterConfig) :
+    LastReadBlockProvider {
 
     /**
      * Returns last processed block
@@ -36,18 +36,6 @@ class FileBasedLastReadBlockProvider(private val chainAdapterConfig: ChainAdapte
         FileWriter(File(chainAdapterConfig.lastReadBlockFilePath)).use { fileWriter ->
             BufferedWriter(fileWriter).use { writer ->
                 writer.write(height.toString())
-            }
-        }
-    }
-
-    /**
-     * Drop last read block height and save to file
-     */
-    @Synchronized
-    override fun dropLastBlockHeight() {
-        FileWriter(File(chainAdapterConfig.lastReadBlockFilePath)).use { fileWriter ->
-            BufferedWriter(fileWriter).use { writer ->
-                writer.write("0")
             }
         }
     }
