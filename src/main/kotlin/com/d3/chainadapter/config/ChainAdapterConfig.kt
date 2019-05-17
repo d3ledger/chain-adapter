@@ -19,4 +19,6 @@ interface ChainAdapterConfig {
     val iroha: IrohaConfig
     // Path to the file, where the last read block number is saved
     val lastReadBlockFilePath: String
+    // Drop last read block on startup
+    val dropLastReadBlock: Boolean
 }

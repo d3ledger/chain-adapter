@@ -27,11 +27,19 @@ const val CHAIN_ADAPTER_SERVICE_NAME = "chain-adapter"
 //TODO Springify
 fun main(args: Array<String>) {
     val chainAdapterConfig =
-        loadRawConfigs("chain-adapter", ChainAdapterConfig::class.java, "${getConfigFolder()}/chain-adapter.properties")
+        loadRawConfigs(
+            "chain-adapter",
+            ChainAdapterConfig::class.java,
+            "${getConfigFolder()}/chain-adapter.properties"
+        )
 
     val irohaCredential = chainAdapterConfig.irohaCredential
     ModelUtil.loadKeypair(irohaCredential.pubkeyPath, irohaCredential.privkeyPath).map { keyPair ->
         createLastReadBlockFile(chainAdapterConfig)
+        val lastReadBlockProvider = FileBasedLastReadBlockProvider(chainAdapterConfig)
+        if (chainAdapterConfig.dropLastReadBlock)
+            lastReadBlockProvider.dropLastBlockHeight()
+
         /**
          * It's essential to handle blocks in this service one-by-one.
          * This is why we explicitly set single threaded executor.
@@ -61,7 +69,7 @@ fun main(args: Array<String>) {
             chainAdapterConfig,
             IrohaQueryHelperImpl(queryAPI),
             irohaChainListener,
-            FileBasedLastReadBlockProvider(chainAdapterConfig)
+            lastReadBlockProvider
         )
         adapter.init {
             logger.error("Iroha failure. Exit.")
@@ -80,7 +88,7 @@ fun main(args: Array<String>) {
 
 /**
  * Creates last read block file
- * @param rmqConfig - RabbitMQ config
+ * @param chainAdapterConfig - ChainAdapterConfig config
  */
 private fun createLastReadBlockFile(chainAdapterConfig: ChainAdapterConfig) {
     val file = File(chainAdapterConfig.lastReadBlockFilePath)

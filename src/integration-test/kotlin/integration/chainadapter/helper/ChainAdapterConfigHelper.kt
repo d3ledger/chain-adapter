@@ -32,6 +32,7 @@ class ChainAdapterConfigHelper {
             override val irohaCredential = chainAdapterConfig.irohaCredential
             override val iroha = chainAdapterConfig.iroha
             override val lastReadBlockFilePath = createTestLastReadBlockFile()
+            override val dropLastReadBlock = chainAdapterConfig.dropLastReadBlock
         }
     }
 

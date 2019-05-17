@@ -39,4 +39,16 @@ class FileBasedLastReadBlockProvider(private val chainAdapterConfig: ChainAdapte
             }
         }
     }
+
+    /**
+     * Drop last read block height and save to file
+     */
+    @Synchronized
+    override fun dropLastBlockHeight() {
+        FileWriter(File(chainAdapterConfig.lastReadBlockFilePath)).use { fileWriter ->
+            BufferedWriter(fileWriter).use { writer ->
+                writer.write("0")
+            }
+        }
+    }
 }
