@@ -13,12 +13,6 @@ class ChainAdapterFailFastIntegrationTest {
 
     @BeforeAll
     fun setUp() {
-        // Mount configs
-        chainAdapterContainer.addFileSystemBind(
-            "${environment.userDir}/configs/",
-            "/opt/chain-adapter/configs",
-            BindMode.READ_ONLY
-        )
         // Mount Iroha keys
         chainAdapterContainer.addFileSystemBind(
             "${environment.userDir}/deploy/iroha/keys/",
@@ -35,7 +29,10 @@ class ChainAdapterFailFastIntegrationTest {
 
         // Set RMQ host
         chainAdapterContainer.addEnv("CHAIN-ADAPTER_RMQHOST", "localhost")
-        chainAdapterContainer.addEnv("CHAIN-ADAPTER_RMQPORT", DEFAULT_RMQ_PORT.toString())
+        chainAdapterContainer.addEnv(
+            "CHAIN-ADAPTER_RMQPORT",
+            environment.rmq.getMappedPort(DEFAULT_RMQ_PORT).toString()
+        )
         // Set Iroha host and port
         chainAdapterContainer.addEnv("CHAIN-ADAPTER_IROHA_HOSTNAME", "localhost")
         chainAdapterContainer.addEnv(
