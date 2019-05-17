@@ -5,8 +5,7 @@ package com.d3.chainadapter
 import com.d3.chainadapter.adapter.ChainAdapter
 import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.chainadapter.provider.FileBasedLastReadBlockProvider
-import com.d3.commons.config.getConfigFolder
-import com.d3.commons.config.loadRawConfigs
+import com.d3.commons.config.loadRawLocalConfigs
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
 import com.d3.commons.sidechain.iroha.util.ModelUtil
@@ -27,10 +26,10 @@ const val CHAIN_ADAPTER_SERVICE_NAME = "chain-adapter"
 //TODO Springify
 fun main(args: Array<String>) {
     val chainAdapterConfig =
-        loadRawConfigs(
+        loadRawLocalConfigs(
             "chain-adapter",
             ChainAdapterConfig::class.java,
-            "${getConfigFolder()}/chain-adapter.properties"
+            "chain-adapter.properties"
         )
 
     val irohaCredential = chainAdapterConfig.irohaCredential

@@ -1,8 +1,7 @@
 package integration.chainadapter.helper
 
 import com.d3.chainadapter.config.ChainAdapterConfig
-import com.d3.commons.config.getConfigFolder
-import com.d3.commons.config.loadRawConfigs
+import com.d3.commons.config.loadRawLocalConfigs
 import java.io.File
 import java.io.IOException
 import java.util.*
@@ -19,10 +18,10 @@ class ChainAdapterConfigHelper {
      * Creates chain adapter config
      */
     fun createChainAdapterConfig(rmqHost: String, rmqPort: Int): ChainAdapterConfig {
-        val chainAdapterConfig = loadRawConfigs(
+        val chainAdapterConfig = loadRawLocalConfigs(
             "chain-adapter",
             ChainAdapterConfig::class.java,
-            "${getConfigFolder()}/chain-adapter.properties"
+            "chain-adapter.properties"
         )
         return object : ChainAdapterConfig {
             override val rmqHost = rmqHost

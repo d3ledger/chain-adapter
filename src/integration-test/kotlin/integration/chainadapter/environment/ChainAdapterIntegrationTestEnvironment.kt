@@ -24,7 +24,6 @@ import jp.co.soramitsu.iroha.java.TransactionStatusObserver
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import jp.co.soramitsu.iroha.testcontainers.PeerConfig
 import jp.co.soramitsu.iroha.testcontainers.detail.GenesisBlockBuilder
-import org.testcontainers.containers.FixedHostPortGenericContainer
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.images.builder.ImageFromDockerfile
 import java.io.Closeable
@@ -55,10 +54,8 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
 
     val irohaContainer = IrohaContainer().withPeerConfig(getPeerConfig())
 
-    private val rmq =
-        KGenericContainer("rabbitmq:3-management").withExposedPorts(DEFAULT_RMQ_PORT).withFixedExposedPort(
-            DEFAULT_RMQ_PORT, DEFAULT_RMQ_PORT
-        )
+    val rmq =
+        KGenericContainer("rabbitmq:3-management").withExposedPorts(DEFAULT_RMQ_PORT)
     val userDir = System.getProperty("user.dir")!!
     private val dockerfile = "$userDir/Dockerfile"
     private val jarFile = "$userDir/build/libs/chain-adapter-all.jar"
@@ -224,7 +221,7 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
  * The GenericContainer class is not very friendly to Kotlin.
  * So the following class was created as a workaround.
  */
-class KGenericContainer(imageName: String) : FixedHostPortGenericContainer<KGenericContainer>(imageName)
+class KGenericContainer(imageName: String) : GenericContainer<KGenericContainer>(imageName)
 
 class KGenericContainerImage(image: ImageFromDockerfile) : GenericContainer<KGenericContainerImage>(image)
 
