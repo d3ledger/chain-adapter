@@ -31,7 +31,7 @@ pipeline {
           steps {
             script {
               def scmVars = checkout scm
-              if (env.BRANCH_NAME ==~ /(master|develop|reserved)/ || env.TAG_NAME) {
+              if (env.BRANCH_NAME ==~ /(master|develop|reserved)/) {
                 withCredentials([usernamePassword(credentialsId: 'nexus-d3-docker', usernameVariable: 'login', passwordVariable: 'password')]) {
                   sh "docker login nexus.iroha.tech:19002 -u ${login} -p '${password}'"
 
