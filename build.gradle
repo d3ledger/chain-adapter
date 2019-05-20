@@ -40,6 +40,10 @@ sourceSets {
     }
 }
 
+wrapper {
+    gradleVersion = 4.10
+}
+
 task integrationTest(type: Test) {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
     description = 'Runs chain-adapter integration tests'

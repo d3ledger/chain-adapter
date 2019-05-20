@@ -6,11 +6,11 @@ import java.io.File
 import java.io.FileWriter
 import java.util.*
 
-
 /**
  * File based last processed Iroha block reader
  */
-class FileBasedLastReadBlockProvider(private val chainAdapterConfig: ChainAdapterConfig) : LastReadBlockProvider {
+class FileBasedLastReadBlockProvider(private val chainAdapterConfig: ChainAdapterConfig) :
+    LastReadBlockProvider {
 
     /**
      * Returns last processed block

@@ -26,11 +26,16 @@ const val CHAIN_ADAPTER_SERVICE_NAME = "chain-adapter"
 //TODO Springify
 fun main(args: Array<String>) {
     val chainAdapterConfig =
-        loadRawLocalConfigs("chain-adapter", ChainAdapterConfig::class.java, "chain-adapter.properties")
+        loadRawLocalConfigs(
+            "chain-adapter",
+            ChainAdapterConfig::class.java,
+            "chain-adapter.properties"
+        )
 
     val irohaCredential = chainAdapterConfig.irohaCredential
     ModelUtil.loadKeypair(irohaCredential.pubkeyPath, irohaCredential.privkeyPath).map { keyPair ->
         createLastReadBlockFile(chainAdapterConfig)
+
         /**
          * It's essential to handle blocks in this service one-by-one.
          * This is why we explicitly set single threaded executor.
@@ -79,7 +84,7 @@ fun main(args: Array<String>) {
 
 /**
  * Creates last read block file
- * @param rmqConfig - RabbitMQ config
+ * @param chainAdapterConfig - ChainAdapterConfig config
  */
 private fun createLastReadBlockFile(chainAdapterConfig: ChainAdapterConfig) {
     val file = File(chainAdapterConfig.lastReadBlockFilePath)

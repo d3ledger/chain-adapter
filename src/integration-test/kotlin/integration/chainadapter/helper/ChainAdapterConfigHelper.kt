@@ -2,8 +2,6 @@ package integration.chainadapter.helper
 
 import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.commons.config.loadRawLocalConfigs
-import java.io.File
-import java.io.IOException
 import java.util.*
 import kotlin.math.absoluteValue
 
@@ -30,23 +28,8 @@ class ChainAdapterConfigHelper {
             override val irohaExchange = random.nextInt().absoluteValue.toString()
             override val irohaCredential = chainAdapterConfig.irohaCredential
             override val iroha = chainAdapterConfig.iroha
-            override val lastReadBlockFilePath = createTestLastReadBlockFile()
+            override val lastReadBlockFilePath = chainAdapterConfig.lastReadBlockFilePath
+            override val dropLastReadBlock = true
         }
-    }
-
-    /**
-     * Creates randomly named file for last read block height storage
-     */
-    fun createTestLastReadBlockFile(): String {
-        // Random file
-        val file = File("$LAST_READ_BLOCK_TEST_FOLDER/last_block_${random.nextInt().absoluteValue}.txt")
-        val folder = File(file.parentFile.absolutePath)
-        if (!folder.exists() && !folder.mkdirs()) {
-            throw IOException("Cannot create chain-adapter test folder")
-        }
-        if (!file.createNewFile()) {
-            throw IOException("Cannot create file for last read block storage")
-        }
-        return file.absolutePath
     }
 }
