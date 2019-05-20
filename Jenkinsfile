@@ -31,12 +31,11 @@ pipeline {
           steps {
             script {
               def scmVars = checkout scm
-              //if (env.BRANCH_NAME ==~ /(master|develop|reserved)/) {
+              if (env.BRANCH_NAME ==~ /(master|develop|reserved)/) {
                 withCredentials([usernamePassword(credentialsId: 'nexus-d3-docker', usernameVariable: 'login', passwordVariable: 'password')]) {
                   sh "docker login nexus.iroha.tech:19002 -u ${login} -p '${password}'"
 
-                  //TAG = env.BRANCH_NAME
-                  TAG = "debug"
+                  TAG = env.BRANCH_NAME
                   iC = docker.image("gradle:4.10.2-jdk8-slim")
                   iC.inside("-e JVM_OPTS='-Xmx3200m' -e TERM='dumb'") {
                     sh "gradle shadowJar"
@@ -50,7 +49,7 @@ pipeline {
 
                   chainAdapter.push("${TAG}")
                 }
-             // }
+              }
             }
           }
         }
