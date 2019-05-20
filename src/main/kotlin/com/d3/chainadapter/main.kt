@@ -35,9 +35,6 @@ fun main(args: Array<String>) {
     val irohaCredential = chainAdapterConfig.irohaCredential
     ModelUtil.loadKeypair(irohaCredential.pubkeyPath, irohaCredential.privkeyPath).map { keyPair ->
         createLastReadBlockFile(chainAdapterConfig)
-        val lastReadBlockProvider = FileBasedLastReadBlockProvider(chainAdapterConfig)
-        if (chainAdapterConfig.dropLastReadBlock)
-            lastReadBlockProvider.saveLastBlockHeight(0)
 
         /**
          * It's essential to handle blocks in this service one-by-one.
@@ -68,7 +65,7 @@ fun main(args: Array<String>) {
             chainAdapterConfig,
             IrohaQueryHelperImpl(queryAPI),
             irohaChainListener,
-            lastReadBlockProvider
+            FileBasedLastReadBlockProvider(chainAdapterConfig)
         )
         adapter.init {
             logger.error("Iroha failure. Exit.")

@@ -31,7 +31,6 @@ import java.io.File
 import java.util.*
 import kotlin.math.absoluteValue
 
-
 private val random = Random()
 const val DEFAULT_RMQ_PORT = 5672
 
