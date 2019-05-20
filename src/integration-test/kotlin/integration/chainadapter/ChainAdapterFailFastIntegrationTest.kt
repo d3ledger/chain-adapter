@@ -8,6 +8,8 @@ import org.testcontainers.containers.BindMode
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ChainAdapterFailFastIntegrationTest {
 
+    private val LAST_READ_BLOCK_FILE= "deploy/chain-adapter/last_read_block.txt"
+
     private val environment = ChainAdapterIntegrationTestEnvironment()
     private val chainAdapterContainer = environment.createChainAdapterContainer()
 
@@ -22,7 +24,7 @@ class ChainAdapterFailFastIntegrationTest {
 
         // Mount last read block file
         chainAdapterContainer.addFileSystemBind(
-            environment.chainAdapterConfigHelper.createTestLastReadBlockFile(),
+            LAST_READ_BLOCK_FILE,
             "/opt/chain-adapter/deploy/chain-adapter/last_read_block.txt",
             BindMode.READ_WRITE
         )
