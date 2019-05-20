@@ -75,7 +75,7 @@ dependencies {
     //TODO change version after D3 release
     compile "com.github.d3ledger.notary:notary-commons:$notary_version"
     testCompile "com.github.d3ledger.notary:notary-iroha-integration-test:$notary_version"
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    compile 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     compile "com.rabbitmq:amqp-client:5.6.0"
     // unit tests
     testCompile('org.junit.jupiter:junit-jupiter-api:5.2.0')
