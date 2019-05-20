@@ -41,6 +41,8 @@ pipeline {
                     sh "gradle shadowJar"
                   }
 
+                  def nexusRepository="nexus.iroha.tech:19002/${login}"
+
                   def chainAdapterJarFile="/build/libs/chain-adapter-all.jar"
 
                   chainAdapter = docker.build("${nexusRepository}/chain-adapter:${TAG}", "-f docker/dockerfile --build-arg JAR_FILE=${chainAdapterJarFile} .")
