@@ -54,6 +54,10 @@ open class ChainAdapter(
      */
     fun init(onIrohaListenError: () -> Unit): Result<Unit, Exception> {
         return Result.of {
+            if (chainAdapterConfig.dropLastReadBlock) {
+                logger.info { "Drop last block" }
+                lastReadBlockProvider.saveLastBlockHeight(0)
+            }
             lastReadBlock.set(lastReadBlockProvider.getLastBlockHeight())
             val channel = connection.createChannel()
             channel.exchangeDeclare(chainAdapterConfig.irohaExchange, "fanout", true)
