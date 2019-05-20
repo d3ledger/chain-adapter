@@ -68,7 +68,7 @@ task runIrohaChainAdapter(type: JavaExec) {
 
 dependencies {
     //TODO change version after D3 release
-    compile "com.github.d3ledger.notary:notary-commons:12c385205a"
+    compile "com.github.d3ledger.notary:notary-commons:1e32781f1c"
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     compile "com.rabbitmq:amqp-client:5.6.0"
     // unit tests
