@@ -25,5 +25,31 @@ pipeline {
                 }
             }
         }
+
+        stage('Build and push docker images') {
+          agent { label 'd3-build-agent' }
+          steps {
+            script {
+              def scmVars = checkout scm
+              if (env.BRANCH_NAME ==~ /(master|develop|reserved)/) {
+                withCredentials([usernamePassword(credentialsId: 'nexus-d3-docker', usernameVariable: 'login', passwordVariable: 'password')]) {
+                  sh "docker login nexus.iroha.tech:19002 -u ${login} -p '${password}'"
+
+                  TAG = env.BRANCH_NAME
+                  iC = docker.image("gradle:4.10.2-jdk8-slim")
+                  iC.inside("-e JVM_OPTS='-Xmx3200m' -e TERM='dumb'") {
+                    sh "gradle shadowJar"
+                  }
+
+                  def chainAdapterJarFile="/build/libs/chain-adapter-all.jar"
+
+                  chainAdapter = docker.build("${nexusRepository}/chain-adapter:${TAG}", "-f docker/dockerfile --build-arg JAR_FILE=${chainAdapterJarFile} .")
+
+                  chainAdapter.push("${TAG}")
+                }
+              }
+            }
+          }
+        }
     }
 }
