@@ -2,13 +2,17 @@ package integration.chainadapter
 
 import integration.chainadapter.environment.ChainAdapterIntegrationTestEnvironment
 import integration.chainadapter.environment.DEFAULT_RMQ_PORT
-import org.junit.jupiter.api.*
+import org.junit.Assert.assertTrue
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.testcontainers.containers.BindMode
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ChainAdapterFailFastIntegrationTest {
 
-    private val LAST_READ_BLOCK_FILE= "deploy/chain-adapter/last_read_block.txt"
+    private val LAST_READ_BLOCK_FILE = "deploy/chain-adapter/last_read_block.txt"
 
     private val environment = ChainAdapterIntegrationTestEnvironment()
     private val chainAdapterContainer = environment.createChainAdapterContainer()
@@ -33,7 +37,7 @@ class ChainAdapterFailFastIntegrationTest {
         chainAdapterContainer.addEnv("CHAIN-ADAPTER_RMQHOST", "localhost")
         chainAdapterContainer.addEnv(
             "CHAIN-ADAPTER_RMQPORT",
-            environment.rmq.getMappedPort(DEFAULT_RMQ_PORT).toString()
+            environment.containerHelper.rmqContainer.getMappedPort(DEFAULT_RMQ_PORT).toString()
         )
         // Set Iroha host and port
         chainAdapterContainer.addEnv("CHAIN-ADAPTER_IROHA_HOSTNAME", "localhost")
@@ -59,12 +63,12 @@ class ChainAdapterFailFastIntegrationTest {
     fun testFailFast() {
         // Let the service work a little
         Thread.sleep(15_000)
-        Assertions.assertTrue(chainAdapterContainer.isRunning)
+        assertTrue(environment.containerHelper.isServiceHealthy(chainAdapterContainer))
         // Kill Iroha
         environment.irohaContainer.stop()
         // Wait a little
         Thread.sleep(5_000)
         // Check that the service is dead
-        Assertions.assertFalse(chainAdapterContainer.isRunning)
+        assertTrue(environment.containerHelper.isServiceDead(chainAdapterContainer))
     }
 }
