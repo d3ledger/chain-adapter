@@ -12,6 +12,8 @@ import com.d3.commons.sidechain.iroha.util.ModelUtil
 import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
 import com.d3.commons.util.createPrettySingleThreadPool
 import integration.chainadapter.helper.ChainAdapterConfigHelper
+import integration.helper.ContainerHelper
+import integration.helper.KGenericContainerImage
 import io.grpc.ManagedChannelBuilder
 import iroha.protocol.BlockOuterClass
 import iroha.protocol.Commands
@@ -24,10 +26,7 @@ import jp.co.soramitsu.iroha.java.TransactionStatusObserver
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import jp.co.soramitsu.iroha.testcontainers.PeerConfig
 import jp.co.soramitsu.iroha.testcontainers.detail.GenesisBlockBuilder
-import org.testcontainers.containers.GenericContainer
-import org.testcontainers.images.builder.ImageFromDockerfile
 import java.io.Closeable
-import java.io.File
 import java.util.*
 import kotlin.math.absoluteValue
 
@@ -39,6 +38,7 @@ const val DEFAULT_RMQ_PORT = 5672
  */
 class ChainAdapterIntegrationTestEnvironment : Closeable {
 
+    val containerHelper = ContainerHelper()
     private val peerKeyPair = Ed25519Sha3().generateKeypair()
 
     private val rmqKeyPair =
@@ -53,8 +53,6 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
 
     val irohaContainer = IrohaContainer().withPeerConfig(getPeerConfig())
 
-    val rmq =
-        KGenericContainer("rabbitmq:3-management").withExposedPorts(DEFAULT_RMQ_PORT)
     val userDir = System.getProperty("user.dir")!!
     private val dockerfile = "$userDir/Dockerfile"
     private val jarFile = "$userDir/build/libs/chain-adapter-all.jar"
@@ -64,18 +62,13 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
      * @return container
      */
     fun createChainAdapterContainer(): KGenericContainerImage {
-        return KGenericContainerImage(
-            ImageFromDockerfile()
-                .withFileFromFile(jarFile, File(jarFile))
-                .withFileFromFile("Dockerfile", File(dockerfile))
-                .withBuildArg("JAR_FILE", jarFile)
-        ).withLogConsumer { outputFrame -> print(outputFrame.utf8String) }.withNetworkMode("host")
+        return containerHelper.createContainer(jarFile, dockerfile)
     }
 
     private val irohaAPI: IrohaAPI
 
     init {
-        rmq.start()
+        containerHelper.rmqContainer.start()
         // I don't want to see nasty Iroha logs
         irohaContainer.withLogger(null)
         irohaContainer.start()
@@ -127,8 +120,8 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
     fun createAdapter(): OpenChainAdapter {
         val chainAdapterConfig =
             chainAdapterConfigHelper.createChainAdapterConfig(
-                rmq.containerIpAddress,
-                rmq.getMappedPort(DEFAULT_RMQ_PORT)
+                containerHelper.rmqContainer.containerIpAddress,
+                containerHelper.rmqContainer.getMappedPort(DEFAULT_RMQ_PORT)
             )
         val irohaAPI = irohaAPI()
         val lastReadBlockProvider = FileBasedLastReadBlockProvider(chainAdapterConfig)
@@ -212,17 +205,9 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
     override fun close() {
         irohaAPI.close()
         irohaContainer.close()
-        rmq.close()
+        containerHelper.close()
     }
 }
-
-/**
- * The GenericContainer class is not very friendly to Kotlin.
- * So the following class was created as a workaround.
- */
-class KGenericContainer(imageName: String) : GenericContainer<KGenericContainer>(imageName)
-
-class KGenericContainerImage(image: ImageFromDockerfile) : GenericContainer<KGenericContainerImage>(image)
 
 /**
  * This ChainAdapter implementation is used to expose values
