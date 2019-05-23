@@ -1,10 +1,6 @@
 buildscript {
     ext.kotlin_version = '1.3.10'
-<<<<<<< HEAD
     ext.notary_version = '7bc1c156b5'
-=======
-    ext.notary_version = 'dc7aa96e6f'
->>>>>>> Container helper (#11)
     repositories {
         mavenCentral()
         jcenter()
