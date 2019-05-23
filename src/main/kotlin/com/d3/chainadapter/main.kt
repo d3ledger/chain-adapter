@@ -8,14 +8,15 @@ import com.d3.chainadapter.provider.FileBasedLastReadBlockProvider
 import com.d3.commons.config.loadRawLocalConfigs
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
-import com.d3.commons.sidechain.iroha.util.ModelUtil
 import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
 import com.d3.commons.util.createPrettySingleThreadPool
+import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.failure
 import com.github.kittinunf.result.map
 import io.grpc.ManagedChannelBuilder
 import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.java.QueryAPI
+import jp.co.soramitsu.iroha.java.Utils
 import mu.KLogging
 import java.io.File
 import java.io.IOException
@@ -33,7 +34,7 @@ fun main(args: Array<String>) {
         )
 
     val irohaCredential = chainAdapterConfig.irohaCredential
-    ModelUtil.loadKeypair(irohaCredential.pubkeyPath, irohaCredential.privkeyPath).map { keyPair ->
+    Result.of { Utils.parseHexKeypair(irohaCredential.pubkey, irohaCredential.privkey) }.map { keyPair ->
         createLastReadBlockFile(chainAdapterConfig)
 
         /**
