@@ -6,9 +6,9 @@ import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.chainadapter.provider.FileBasedLastReadBlockProvider
 import com.d3.chainadapter.provider.LastReadBlockProvider
 import com.d3.commons.config.RMQConfig
+import com.d3.commons.config.loadRawLocalConfigs
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
-import com.d3.commons.sidechain.iroha.util.ModelUtil
 import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
 import com.d3.commons.util.createPrettySingleThreadPool
 import integration.chainadapter.helper.ChainAdapterConfigHelper
@@ -19,10 +19,7 @@ import iroha.protocol.BlockOuterClass
 import iroha.protocol.Commands
 import iroha.protocol.Primitive
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
-import jp.co.soramitsu.iroha.java.IrohaAPI
-import jp.co.soramitsu.iroha.java.QueryAPI
-import jp.co.soramitsu.iroha.java.Transaction
-import jp.co.soramitsu.iroha.java.TransactionStatusObserver
+import jp.co.soramitsu.iroha.java.*
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import jp.co.soramitsu.iroha.testcontainers.PeerConfig
 import jp.co.soramitsu.iroha.testcontainers.detail.GenesisBlockBuilder
@@ -40,9 +37,6 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
 
     val containerHelper = ContainerHelper()
     private val peerKeyPair = Ed25519Sha3().generateKeypair()
-
-    private val rmqKeyPair =
-        ModelUtil.loadKeypair("deploy/iroha/keys/rmq@notary.pub", "deploy/iroha/keys/rmq@notary.priv").get()
 
     private val dummyClientKeyPair = Ed25519Sha3().generateKeypair()
 
@@ -90,6 +84,15 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
      * Creates test genesis block
      */
     private fun getGenesisBlock(): BlockOuterClass.Block {
+        val chainAdapterConfig = loadRawLocalConfigs(
+            "chain-adapter",
+            ChainAdapterConfig::class.java,
+            "chain-adapter.properties"
+        )
+        val rmqKeyPair = Utils.parseHexKeypair(
+            chainAdapterConfig.irohaCredential.pubkey,
+            chainAdapterConfig.irohaCredential.privkey
+        )
         return GenesisBlockBuilder().addTransaction(
             Transaction.builder("")
                 .addPeer("0.0.0.0:10001", peerKeyPair.public)
@@ -123,6 +126,10 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
                 containerHelper.rmqContainer.containerIpAddress,
                 containerHelper.rmqContainer.getMappedPort(DEFAULT_RMQ_PORT)
             )
+        val rmqKeyPair = Utils.parseHexKeypair(
+            chainAdapterConfig.irohaCredential.pubkey,
+            chainAdapterConfig.irohaCredential.privkey
+        )
         val irohaAPI = irohaAPI()
         val lastReadBlockProvider = FileBasedLastReadBlockProvider(chainAdapterConfig)
         val queryAPI =
