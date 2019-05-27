@@ -88,7 +88,7 @@ dependencies {
     testRuntime("org.junit.vintage:junit-vintage-engine:5.2.0")
     testCompile group: 'org.testcontainers', name: 'testcontainers', version: '1.11.2'
     //Iroha-java related
-    testCompile('com.github.hyperledger.iroha-java:testcontainers:4.0.0')
+    testCompile('com.github.hyperledger.iroha-java:testcontainers:5.1.1')
     testCompile('org.slf4j:slf4j-api:1.7.25')
     testCompile('org.slf4j:slf4j-simple:1.7.25')
     // https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java-util
