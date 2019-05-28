@@ -40,15 +40,17 @@ class ChainAdapterIntegrationTest {
             ReliableIrohaChainListener(
                 environment.mapToRMQConfig(adapter.chainAdapterConfig),
                 queueName,
-                { block, _ -> consumedBlocks.add(block.blockV1.payload.height) },
                 createPrettySingleThreadPool(
                     CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
                 ),
                 autoAck = true,
                 onRmqFail = {}
             ).use { reliableChainListener ->
+                reliableChainListener.getBlockObservable().get().subscribe { (block, _) ->
+                    consumedBlocks.add(block.blockV1.payload.height)
+                }
                 //Start consuming
-                reliableChainListener.getBlockObservable()
+                reliableChainListener.listen()
                 repeat(transactions) {
                     environment.createDummyTransaction()
                 }
@@ -83,15 +85,17 @@ class ChainAdapterIntegrationTest {
             ReliableIrohaChainListener(
                 environment.mapToRMQConfig(adapter.chainAdapterConfig),
                 queueName,
-                { block, _ -> consumedBlocks.add(block.blockV1.payload.height) },
                 createPrettySingleThreadPool(
                     CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
                 ),
                 autoAck = false,
                 onRmqFail = {}
             ).use { reliableChainListener ->
+                reliableChainListener.getBlockObservable().get().subscribe { (block, _) ->
+                    consumedBlocks.add(block.blockV1.payload.height)
+                }
                 //Start consuming
-                reliableChainListener.getBlockObservable()
+                reliableChainListener.listen()
                 repeat(transactions) {
                     environment.createDummyTransaction()
                 }
@@ -120,18 +124,18 @@ class ChainAdapterIntegrationTest {
             ReliableIrohaChainListener(
                 environment.mapToRMQConfig(adapter.chainAdapterConfig),
                 queueName,
-                { block, ack ->
-                    consumedBlocks.add(block.blockV1.payload.height)
-                    ack()
-                },
                 createPrettySingleThreadPool(
                     CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
                 ),
                 autoAck = false,
                 onRmqFail = {}
             ).use { reliableChainListener ->
+                reliableChainListener.getBlockObservable().get().subscribe { (block, ack) ->
+                    consumedBlocks.add(block.blockV1.payload.height)
+                    ack()
+                }
                 //Start consuming
-                reliableChainListener.getBlockObservable()
+                reliableChainListener.listen()
                 repeat(transactions) {
                     environment.createDummyTransaction()
                 }

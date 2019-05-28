@@ -41,7 +41,13 @@ class ChainAdapterUnreadIntegrationTest {
             ReliableIrohaChainListener(
                 environment.mapToRMQConfig(adapter.chainAdapterConfig),
                 queueName,
-                { block, _ ->
+                createPrettySingleThreadPool(
+                    CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
+                ),
+                autoAck = true,
+                onRmqFail = {}
+            ).use { reliableChainListener ->
+                reliableChainListener.getBlockObservable().get().subscribe { (block, _) ->
                     block.blockV1.payload.transactionsList.forEach { tx ->
                         tx.payload.reducedPayload.commandsList.forEach { command ->
                             if (environment.isDummyCommand(command)) {
@@ -51,15 +57,9 @@ class ChainAdapterUnreadIntegrationTest {
                             }
                         }
                     }
-                },
-                createPrettySingleThreadPool(
-                    CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
-                ),
-                autoAck = true,
-                onRmqFail = {}
-            ).use { reliableChainListener ->
+                }
                 // Start consuming
-                reliableChainListener.getBlockObservable()
+                reliableChainListener.listen()
                 // Before start
                 logger.info { "Start send dummy transactions before service start" }
                 repeat(transactionsBeforeStart) {
