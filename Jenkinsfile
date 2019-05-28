@@ -42,15 +42,12 @@ pipeline {
 
                 def nexusRepository="nexus.iroha.tech:19002/${login}"
 
-                println("push to " + nexusRepository)
 
                 def chainAdapterJarFile="/build/libs/chain-adapter-all.jar"
 
                 chainAdapter = docker.build("${nexusRepository}/chain-adapter:${TAG}", "-f Dockerfile --build-arg JAR_FILE=${chainAdapterJarFile} .")
 
                 chainAdapter.push("${TAG}")
-
-                println("pushed")
               }
             }
           }
