@@ -32,8 +32,8 @@ pipeline {
             script {
               def scmVars = checkout scm
 
-              if (env.GIT_BRANCH ==~ /(master|develop|reserved)/ || env.TAG_NAME) {
-                TAG = env.TAG_NAME ? env.TAG_NAME : env.GIT_BRANCH
+              if (env.BRANCH_NAME ==~ /(master|develop|reserved)/ || env.TAG_NAME) {
+                TAG = env.TAG_NAME ? env.TAG_NAME : env.BRANCH_NAME
 
                 iC = docker.image("gradle:4.10.2-jdk8-slim")
                 iC.inside("-e JVM_OPTS='-Xmx3200m' -e TERM='dumb'") {
