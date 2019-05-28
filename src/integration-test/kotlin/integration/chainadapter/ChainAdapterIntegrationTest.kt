@@ -1,3 +1,8 @@
+/*
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package integration.chainadapter
 
 import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
