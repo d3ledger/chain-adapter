@@ -23,7 +23,9 @@ import jp.co.soramitsu.iroha.java.*
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import jp.co.soramitsu.iroha.testcontainers.PeerConfig
 import jp.co.soramitsu.iroha.testcontainers.detail.GenesisBlockBuilder
+import org.testcontainers.images.builder.ImageFromDockerfile
 import java.io.Closeable
+import java.io.File
 import java.util.*
 import kotlin.math.absoluteValue
 
@@ -58,15 +60,23 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
     val irohaContainer = IrohaContainer().withPeerConfig(getPeerConfig())
 
     val userDir = System.getProperty("user.dir")!!
-    private val dockerfile = "$userDir/Dockerfile"
-    private val jarFile = "$userDir/build/libs/chain-adapter-all.jar"
+    private val dockerfile = "$userDir/build/docker/Dockerfile"
+    private val chainAdapterContextFolder = "$userDir/build/docker/"
 
+    //TODO move to the main repository
     /**
-     * Creates chain adapter docker container based on DockerFile
+     * Creates chain adapter docker container
      * @return container
      */
     fun createChainAdapterContainer(): KGenericContainerImage {
-        return containerHelper.createContainer(jarFile, dockerfile)
+        return KGenericContainerImage(
+            ImageFromDockerfile()
+                .withFileFromFile("", File(chainAdapterContextFolder))
+                .withFileFromFile("Dockerfile", File(dockerfile))
+
+        )
+            .withLogConsumer { outputFrame -> print(outputFrame.utf8String) }
+            .withNetworkMode("host")
     }
 
     private val irohaAPI: IrohaAPI
