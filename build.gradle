@@ -34,7 +34,7 @@ group 'com.d3.chainadapter'
 
 shadowDistZip.classifier = 'shadow'
 shadowDistTar.classifier = 'shadow'
-// name of jar file that the shadowJar plugin generates
+// name of the jar file that the shadowJar plugin generates
 shadowJar.archiveName = 'app.jar'
 
 // sora-plugin configs
@@ -43,9 +43,9 @@ soramitsu {
     docker {
         // docker tag
         tag = System.getenv("TAG")
-        // jar file that is used in the generated Dockerfile
+        // the jar file that is used in the generated Dockerfile
         jar = new File("build/libs/app.jar")
-        // the rest in configured using env variables
+        // the rest is configured using env variables
     }
 }
 
