@@ -27,6 +27,17 @@ pipeline {
             }
         }
 
+        stage('JaCoCo code coverage report generation') {
+          steps {
+            step([$class: 'JacocoPublisher',
+                  execPattern: 'target/*.exec',
+                  classPattern: 'target/classes',
+                  sourcePattern: 'src/main/java',
+                  exclusionPattern: 'src/test*'
+            ])
+          }
+        }
+
         stage('Build and push docker images') {
           agent { label 'd3-build-agent' }
           steps {
