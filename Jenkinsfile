@@ -14,6 +14,7 @@ pipeline {
                             .inside("-v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp") {
                         sh "gradle test --info"
                         sh "gradle shadowJar"
+                        sh "gradle dockerfileCreate"
                         sh "gradle compileIntegrationTestKotlin --info"
                         sh "gradle integrationTest --info"
                     }
@@ -31,24 +32,21 @@ pipeline {
           steps {
             script {
               def scmVars = checkout scm
-              if (env.BRANCH_NAME ==~ /(master|develop|reserved)/) {
+               if (env.BRANCH_NAME ==~ /(master|develop|reserved)/ || env.TAG_NAME) {
                 withCredentials([usernamePassword(credentialsId: 'nexus-d3-docker', usernameVariable: 'login', passwordVariable: 'password')]) {
-                  sh "docker login nexus.iroha.tech:19002 -u ${login} -p '${password}'"
 
-                  TAG = env.BRANCH_NAME
+                  TAG = env.TAG_NAME ? env.TAG_NAME : env.BRANCH_NAME
                   iC = docker.image("gradle:4.10.2-jdk8-slim")
-                  iC.inside("-e JVM_OPTS='-Xmx3200m' -e TERM='dumb'") {
+                  iC.inside(" -e JVM_OPTS='-Xmx3200m' -e TERM='dumb'"+
+                  " -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp"+
+                  " -e DOCKER_REGISTRY_URL='https://nexus.iroha.tech:19002'"+
+                  " -e DOCKER_REGISTRY_USERNAME='${login}'"+
+                  " -e DOCKER_REGISTRY_PASSWORD='${password}'"+
+                  " -e TAG='${TAG}'") {
                     sh "gradle shadowJar"
+                    sh "gradle dockerPush"
                   }
-
-                  def nexusRepository="nexus.iroha.tech:19002/${login}"
-
-                  def chainAdapterJarFile="/build/libs/chain-adapter-all.jar"
-
-                  chainAdapter = docker.build("${nexusRepository}/chain-adapter:${TAG}", "-f Dockerfile --build-arg JAR_FILE=${chainAdapterJarFile} .")
-
-                  chainAdapter.push("${TAG}")
-                }
+                 }
               }
             }
           }

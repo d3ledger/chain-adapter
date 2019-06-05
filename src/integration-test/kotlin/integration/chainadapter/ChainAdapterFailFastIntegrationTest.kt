@@ -1,3 +1,8 @@
+/*
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package integration.chainadapter
 
 import integration.chainadapter.environment.ChainAdapterIntegrationTestEnvironment
@@ -9,12 +14,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.testcontainers.containers.BindMode
 
+private const val LAST_READ_BLOCK_FILE = "deploy/chain-adapter/last_read_block.txt"
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ChainAdapterFailFastIntegrationTest {
 
-    private val LAST_READ_BLOCK_FILE = "deploy/chain-adapter/last_read_block.txt"
-
     private val environment = ChainAdapterIntegrationTestEnvironment()
+
     private val chainAdapterContainer = environment.createChainAdapterContainer()
 
     @BeforeAll

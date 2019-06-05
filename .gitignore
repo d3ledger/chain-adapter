@@ -67,3 +67,4 @@ fabric.properties
 
 # Chain-adapter files
 deploy/chain-adapter/
+deploy/chain-adapter/last_read_block.txt
