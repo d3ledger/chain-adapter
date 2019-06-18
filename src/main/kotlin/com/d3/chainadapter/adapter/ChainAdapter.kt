@@ -25,6 +25,7 @@ import iroha.protocol.BlockOuterClass
 import iroha.protocol.QryResponses
 import jp.co.soramitsu.iroha.java.ErrorResponseException
 import mu.KLogging
+import org.springframework.stereotype.Component
 import java.io.Closeable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicLong
@@ -35,6 +36,7 @@ private const val BAD_IROHA_BLOCK_HEIGHT_ERROR_CODE = 3
  * Chain adapter service
  * It reads Iroha blocks and sends them to recipients via RabbitMQ
  */
+@Component
 open class ChainAdapter(
     private val chainAdapterConfig: ChainAdapterConfig,
     private val irohaQueryHelper: IrohaQueryHelper,
