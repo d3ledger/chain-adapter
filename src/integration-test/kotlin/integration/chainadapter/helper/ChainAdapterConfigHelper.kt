@@ -27,6 +27,8 @@ class ChainAdapterConfigHelper {
             "chain-adapter.properties"
         )
         return object : ChainAdapterConfig {
+            // No matter what port. Health check service will not be started in tests.
+            override val healthCheckPort=123
             override val rmqHost = rmqHost
             override val rmqPort = rmqPort
             // Random exchange
