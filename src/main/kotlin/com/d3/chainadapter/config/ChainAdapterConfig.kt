@@ -26,4 +26,6 @@ interface ChainAdapterConfig {
     val lastReadBlockFilePath: String
     // Drop last read block on startup
     val dropLastReadBlock: Boolean
+    // Health check port
+    val healthCheckPort: Int
 }
