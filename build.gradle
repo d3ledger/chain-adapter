@@ -16,6 +16,11 @@ buildscript {
 
 plugins {
     id 'jp.co.soramitsu.sora-plugin' version '0.1.2'
+    id "com.github.dolgopolovwork.testreport" version "1"
+}
+
+testReport {
+    testFolders = Arrays.asList("src/integration-test")
 }
 
 repositories {
