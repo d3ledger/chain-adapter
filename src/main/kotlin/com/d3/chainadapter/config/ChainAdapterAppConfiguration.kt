@@ -7,6 +7,7 @@ package com.d3.chainadapter.config
 
 import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
 import com.d3.commons.config.loadRawLocalConfigs
+import com.d3.commons.healthcheck.HealthCheckEndpoint
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
 import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
@@ -70,4 +71,7 @@ class ChainAdapterAppConfiguration {
         irohaAPI(),
         IrohaCredential(irohaCredential.accountId, keyPair)
     )
+
+    @Bean
+    fun healthCheckEndpoint() = HealthCheckEndpoint(chainAdapterConfig.healthCheckPort)
 }
