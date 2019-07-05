@@ -37,7 +37,7 @@ private const val BAD_IROHA_BLOCK_HEIGHT_ERROR_CODE = 3
  * It reads Iroha blocks and sends them to recipients via RabbitMQ
  */
 @Component
-open class ChainAdapter(
+class ChainAdapter(
     private val chainAdapterConfig: ChainAdapterConfig,
     private val irohaQueryHelper: IrohaQueryHelper,
     private val irohaChainListener: IrohaChainListener,
