@@ -23,7 +23,7 @@ const val CHAIN_ADAPTER_SERVICE_NAME = "chain-adapter"
 )
 class ChainAdapterApp
 
-fun main(args: Array<String>) {
+fun main() {
 
     Result.of {
         AnnotationConfigApplicationContext(ChainAdapterApp::class.java)
