@@ -55,6 +55,7 @@ class ChainAdapterUnreadIntegrationTest {
                 reliableChainListener.getBlockObservable().get().subscribe { (block, _) ->
                     block.blockV1.payload.transactionsList.forEach { tx ->
                         tx.payload.reducedPayload.commandsList.forEach { command ->
+                            logger.info("Block ${block.blockV1.payload.height} with command $command")
                             if (environment.isDummyCommand(command)) {
                                 // Collect dummy transactions
                                 // Key is number of transaction
