@@ -57,19 +57,4 @@ pipeline {
             cleanWs()
         }
     }
-    post {
-        always {
-            publishHTML (target: [
-                allowMissing: false,
-                alwaysLinkToLastBuild: false,
-                keepAll: true,
-                reportDir: 'build/reports',
-                reportFiles: 'd3-test-report.html',
-                reportName: "D3 test report"
-            ])
-        }
-        cleanup {
-            cleanWs()
-        }
-    }
 }
