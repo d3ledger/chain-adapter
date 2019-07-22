@@ -29,6 +29,7 @@ import org.springframework.stereotype.Component
 import java.io.Closeable
 import java.math.BigInteger
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicReference
 
 private const val BAD_IROHA_BLOCK_HEIGHT_ERROR_CODE = 3
 
@@ -51,11 +52,7 @@ class ChainAdapter(
         CHAIN_ADAPTER_SERVICE_NAME, "iroha-chain-subscriber"
     )
 
-    var lastReadBlock: BigInteger = BigInteger.ZERO
-        @Synchronized set(value) {
-            field = value
-        }
-        @Synchronized get() = field
+    private var lastReadBlock = AtomicReference<BigInteger>()
 
     init {
         // Handle connection errors
@@ -89,7 +86,7 @@ class ChainAdapter(
                 logger.info { "Drop last block" }
                 lastReadBlockProvider.saveLastBlockHeight(BigInteger.ZERO)
             }
-            lastReadBlock = lastReadBlockProvider.getLastBlockHeight()
+            lastReadBlock.set(lastReadBlockProvider.getLastBlockHeight())
             val channel = connection.createChannel()
             channel.exchangeDeclare(chainAdapterConfig.irohaExchange, "fanout", true)
             logger.info { "Listening Iroha blocks" }
@@ -110,7 +107,7 @@ class ChainAdapter(
                     .subscribe({ block ->
                         publishUnreadLatch.await()
                         // Send only not read Iroha blocks
-                        if (block.blockV1.payload.height > lastReadBlock.toLong()) {
+                        if (block.blockV1.payload.height > lastReadBlock.get().toLong()) {
                             onNewBlock(channel, block)
                         }
                     }, { ex ->
@@ -175,8 +172,13 @@ class ChainAdapter(
         logger.info { "Block $height pushed" }
         // Save last read block
         lastReadBlockProvider.saveLastBlockHeight(BigInteger.valueOf(height))
-        lastReadBlock = BigInteger.valueOf(height)
+        lastReadBlock.set(BigInteger.valueOf(height))
     }
+
+    /**
+     * Returns height of last read Iroha block
+     */
+    fun getLastReadBlock() = lastReadBlock.get()
 
     override fun close() {
         subscriberExecutorService.shutdownNow()
