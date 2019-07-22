@@ -7,10 +7,10 @@ package com.d3.chainadapter.adapter
 
 import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
 import com.d3.chainadapter.config.ChainAdapterConfig
-import com.d3.chainadapter.provider.LastReadBlockProvider
 import com.d3.commons.sidechain.iroha.IrohaChainListener
 import com.d3.commons.sidechain.iroha.util.IrohaQueryHelper
 import com.d3.commons.sidechain.iroha.util.getErrorMessage
+import com.d3.commons.sidechain.provider.LastReadBlockProvider
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map

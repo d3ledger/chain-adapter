@@ -9,11 +9,11 @@ package com.d3.chainadapter
 
 import com.d3.chainadapter.adapter.ChainAdapter
 import com.d3.chainadapter.config.ChainAdapterConfig
-import com.d3.chainadapter.provider.FileBasedLastReadBlockProvider
 import com.d3.commons.config.loadRawLocalConfigs
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
 import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
+import com.d3.commons.sidechain.provider.FileBasedLastReadBlockProvider
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.failure
@@ -39,50 +39,52 @@ fun main(args: Array<String>) {
         )
 
     val irohaCredential = chainAdapterConfig.irohaCredential
-    Result.of { Utils.parseHexKeypair(irohaCredential.pubkey, irohaCredential.privkey) }.map { keyPair ->
-        createLastReadBlockFile(chainAdapterConfig)
+    Result.of { Utils.parseHexKeypair(irohaCredential.pubkey, irohaCredential.privkey) }
+        .map { keyPair ->
+            createLastReadBlockFile(chainAdapterConfig)
 
-        /**
-         * It's essential to handle blocks in this service one-by-one.
-         * This is why we explicitly set single threaded executor.
-         */
-        val irohaAPI = IrohaAPI(chainAdapterConfig.iroha.hostname, chainAdapterConfig.iroha.port)
-        irohaAPI.setChannelForStreamingQueryStub(
-            ManagedChannelBuilder.forAddress(
-                chainAdapterConfig.iroha.hostname, chainAdapterConfig.iroha.port
-            ).executor(
-                createPrettySingleThreadPool(
-                    CHAIN_ADAPTER_SERVICE_NAME,
-                    "iroha-chain-listener"
-                )
-            ).usePlaintext().build()
-        )
-        val queryAPI =
-            QueryAPI(
-                irohaAPI,
-                irohaCredential.accountId,
-                keyPair
+            /**
+             * It's essential to handle blocks in this service one-by-one.
+             * This is why we explicitly set single threaded executor.
+             */
+            val irohaAPI =
+                IrohaAPI(chainAdapterConfig.iroha.hostname, chainAdapterConfig.iroha.port)
+            irohaAPI.setChannelForStreamingQueryStub(
+                ManagedChannelBuilder.forAddress(
+                    chainAdapterConfig.iroha.hostname, chainAdapterConfig.iroha.port
+                ).executor(
+                    createPrettySingleThreadPool(
+                        CHAIN_ADAPTER_SERVICE_NAME,
+                        "iroha-chain-listener"
+                    )
+                ).usePlaintext().build()
             )
-        val irohaChainListener = IrohaChainListener(
-            irohaAPI,
-            IrohaCredential(irohaCredential.accountId, keyPair)
-        )
-        val adapter = ChainAdapter(
-            chainAdapterConfig,
-            IrohaQueryHelperImpl(queryAPI),
-            irohaChainListener,
-            FileBasedLastReadBlockProvider(chainAdapterConfig)
-        )
-        adapter.init {
-            logger.error("Iroha failure. Exit.")
-            System.exit(1)
-        }.fold(
-            { logger.info("Chain adapter has been started") },
-            { ex ->
-                adapter.close()
-                throw ex
-            })
-    }.failure { ex ->
+            val queryAPI =
+                QueryAPI(
+                    irohaAPI,
+                    irohaCredential.accountId,
+                    keyPair
+                )
+            val irohaChainListener = IrohaChainListener(
+                irohaAPI,
+                IrohaCredential(irohaCredential.accountId, keyPair)
+            )
+            val adapter = ChainAdapter(
+                chainAdapterConfig,
+                IrohaQueryHelperImpl(queryAPI),
+                irohaChainListener,
+                FileBasedLastReadBlockProvider(chainAdapterConfig.lastReadBlockFilePath)
+            )
+            adapter.init {
+                logger.error("Iroha failure. Exit.")
+                System.exit(1)
+            }.fold(
+                { logger.info("Chain adapter has been started") },
+                { ex ->
+                    adapter.close()
+                    throw ex
+                })
+        }.failure { ex ->
         logger.error("Cannot start chain-adapter", ex)
         System.exit(1)
     }
