@@ -83,7 +83,10 @@ class ChainAdapterUnreadIntegrationTest {
                 //Wait a little until consumed
                 Thread.sleep(2_000)
                 logger.info { consumedTransactions }
-                assertEquals(transactionsAfterStart + transactionsAfterStart, consumedTransactions.size)
+                assertEquals(
+                    transactionsAfterStart + transactionsAfterStart,
+                    consumedTransactions.size
+                )
                 assertEquals(consumedTransactions.sorted(), consumedTransactions)
                 assertEquals(
                     adapter.getLastReadBlock(),

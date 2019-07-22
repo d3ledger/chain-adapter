@@ -11,6 +11,7 @@ import com.d3.commons.healthcheck.HealthCheckEndpoint
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
 import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
+import com.d3.commons.sidechain.provider.FileBasedLastReadBlockProvider
 import com.d3.commons.util.createPrettySingleThreadPool
 import io.grpc.ManagedChannelBuilder
 import jp.co.soramitsu.iroha.java.IrohaAPI
@@ -71,6 +72,10 @@ class ChainAdapterAppConfiguration {
         irohaAPI(),
         IrohaCredential(irohaCredential.accountId, keyPair)
     )
+
+    @Bean
+    fun lastReadBlockProvider() =
+        FileBasedLastReadBlockProvider(chainAdapterConfig.lastReadBlockFilePath)
 
     @Bean
     fun healthCheckEndpoint() = HealthCheckEndpoint(chainAdapterConfig.healthCheckPort)
