@@ -52,7 +52,7 @@ class ChainAdapter(
         CHAIN_ADAPTER_SERVICE_NAME, "iroha-chain-subscriber"
     )
 
-    private var lastReadBlock = AtomicReference<BigInteger>()
+    private val lastReadBlock = AtomicReference<BigInteger>(BigInteger.ZERO)
 
     init {
         // Handle connection errors
@@ -107,7 +107,7 @@ class ChainAdapter(
                     .subscribe({ block ->
                         publishUnreadLatch.await()
                         // Send only not read Iroha blocks
-                        if (block.blockV1.payload.height > lastReadBlock.get().toLong()) {
+                        if (block.blockV1.payload.height.toBigInteger() > lastReadBlock.get()) {
                             onNewBlock(channel, block)
                         }
                     }, { ex ->
@@ -122,13 +122,13 @@ class ChainAdapter(
      * @param channel - RabbitMQ channel that is used to publish Iroha blocks
      */
     private fun publishUnreadIrohaBlocks(channel: Channel) {
-        var lastProcessedBlock = lastReadBlockProvider.getLastBlockHeight().toLong()
+        var lastProcessedBlock = lastReadBlockProvider.getLastBlockHeight()
         var donePublishing = false
         while (!donePublishing) {
             lastProcessedBlock++
             logger.info { "Try read Iroha block $lastProcessedBlock" }
 
-            irohaQueryHelper.getBlock(lastProcessedBlock).fold({ response ->
+            irohaQueryHelper.getBlock(lastProcessedBlock.toLong()).fold({ response ->
                 onNewBlock(channel, response.block)
             }, { ex ->
                 if (ex is ErrorResponseException) {
