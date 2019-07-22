@@ -1,6 +1,6 @@
 buildscript {
     ext.kotlin_version = '1.3.10'
-    ext.notary_version = '7bc1c156b5'
+    ext.notary_version = '8bfc36e202e1aa7830c39a380ccb444fb18aff01'
     repositories {
         mavenCentral()
         jcenter()
@@ -8,6 +8,7 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlin_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.1'
     }
@@ -15,6 +16,11 @@ buildscript {
 
 plugins {
     id 'jp.co.soramitsu.sora-plugin' version '0.1.2'
+    id "com.github.dolgopolovwork.testreport" version "1"
+}
+
+testReport {
+    testFolders = Arrays.asList("src/integration-test")
 }
 
 repositories {
@@ -24,6 +30,7 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
+apply plugin: "kotlin-spring" // See https://kotlinlang.org/docs/reference/compiler-plugins.html#kotlin-spring-compiler-plugin
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'kotlin'
 apply plugin: 'maven'
@@ -75,11 +82,7 @@ task integrationTest(type: Test) {
     // Enable JUnit5 tests
     useJUnitPlatform {
     }
-
-    mustRunAfter test
 }
-
-check.dependsOn integrationTest
 
 configurations {
     integrationTestImplementation.extendsFrom testImplementation
@@ -93,6 +96,8 @@ task runIrohaChainAdapter(type: JavaExec) {
 }
 
 dependencies {
+    // https://mvnrepository.com/artifact/org.springframework/spring-context
+    compile group: 'org.springframework', name: 'spring-context', version: '5.1.4.RELEASE'
     //TODO change version after D3 release
     compile "com.github.d3ledger.notary:notary-commons:$notary_version"
     testCompile "com.github.d3ledger.notary:notary-iroha-integration-test:$notary_version"
@@ -116,4 +121,10 @@ compileKotlin {
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
+}
+project.afterEvaluate {
+    dockerfileCreate.dependsOn(shadowJar)
+    integrationTest.dependsOn(dockerfileCreate)
+    integrationTest.finalizedBy(d3TestReport)
+    test.finalizedBy(integrationTest)
 }

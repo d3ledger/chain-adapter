@@ -17,7 +17,7 @@ import org.testcontainers.containers.BindMode
 private const val LAST_READ_BLOCK_FILE = "deploy/chain-adapter/last_read_block.txt"
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ChainAdapterFailFastIntegrationTest {
+class ChainAdapterRMQFailFastIntegrationTest {
 
     private val environment = ChainAdapterIntegrationTestEnvironment()
 
@@ -25,17 +25,10 @@ class ChainAdapterFailFastIntegrationTest {
 
     @BeforeAll
     fun setUp() {
-        // Mount Iroha keys
-        chainAdapterContainer.addFileSystemBind(
-            "${environment.userDir}/deploy/iroha/keys/",
-            "/opt/chain-adapter/deploy/iroha/keys",
-            BindMode.READ_ONLY
-        )
-
         // Mount last read block file
         chainAdapterContainer.addFileSystemBind(
             LAST_READ_BLOCK_FILE,
-            "/opt/chain-adapter/deploy/chain-adapter/last_read_block.txt",
+            "/deploy/chain-adapter/last_read_block.txt",
             BindMode.READ_WRITE
         )
 
@@ -61,8 +54,8 @@ class ChainAdapterFailFastIntegrationTest {
     }
 
     /**
-     * @given chain adapter and Iroha services being started
-     * @when Iroha dies
+     * @given chain adapter and RMQ services being started
+     * @when RMQ dies
      * @then chain adapter dies as well
      */
     @Test
@@ -70,10 +63,10 @@ class ChainAdapterFailFastIntegrationTest {
         // Let the service work a little
         Thread.sleep(15_000)
         assertTrue(environment.containerHelper.isServiceHealthy(chainAdapterContainer))
-        // Kill Iroha
-        environment.irohaContainer.stop()
+        // Kill RMQ
+        environment.containerHelper.rmqContainer.stop()
         // Wait a little
-        Thread.sleep(5_000)
+        Thread.sleep(15_000)
         // Check that the service is dead
         assertTrue(environment.containerHelper.isServiceDead(chainAdapterContainer))
     }
