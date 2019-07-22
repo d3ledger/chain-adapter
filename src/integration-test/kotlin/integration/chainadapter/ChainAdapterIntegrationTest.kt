@@ -65,10 +65,10 @@ class ChainAdapterIntegrationTest {
                 assertEquals(transactions, consumedBlocks.size)
                 assertEquals(consumedBlocks.sorted(), consumedBlocks)
                 assertEquals(
-                    adapter.getLastReadBlock(),
-                    adapter.lastReadBlockProvider.getLastBlockHeight().toLong()
+                    adapter.lastReadBlock,
+                    adapter.lastReadBlockProvider.getLastBlockHeight()
                 )
-                assertEquals(consumedBlocks.last(), adapter.getLastReadBlock())
+                assertEquals(consumedBlocks.last(), adapter.lastReadBlock.toLong())
             }
         }
     }
@@ -150,10 +150,10 @@ class ChainAdapterIntegrationTest {
                 assertEquals(transactions, consumedBlocks.size)
                 assertEquals(consumedBlocks.sorted(), consumedBlocks)
                 assertEquals(
-                    adapter.getLastReadBlock(),
-                    adapter.lastReadBlockProvider.getLastBlockHeight().toLong()
+                    adapter.lastReadBlock,
+                    adapter.lastReadBlockProvider.getLastBlockHeight()
                 )
-                assertEquals(consumedBlocks.last(), adapter.getLastReadBlock())
+                assertEquals(consumedBlocks.last(), adapter.lastReadBlock.toLong())
             }
         }
     }

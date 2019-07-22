@@ -29,7 +29,6 @@ import org.springframework.stereotype.Component
 import java.io.Closeable
 import java.math.BigInteger
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicLong
 
 private const val BAD_IROHA_BLOCK_HEIGHT_ERROR_CODE = 3
 
@@ -46,11 +45,17 @@ class ChainAdapter(
 ) : Closeable {
 
     private val connectionFactory = ConnectionFactory()
-    private val lastReadBlock = AtomicLong()
+
     private val publishUnreadLatch = CountDownLatch(1)
     private val subscriberExecutorService = createPrettySingleThreadPool(
         CHAIN_ADAPTER_SERVICE_NAME, "iroha-chain-subscriber"
     )
+
+    var lastReadBlock: BigInteger = BigInteger.ZERO
+        @Synchronized set(value) {
+            field = value
+        }
+        @Synchronized get() = field
 
     init {
         // Handle connection errors
@@ -60,7 +65,10 @@ class ChainAdapter(
                 System.exit(1)
             }
 
-            override fun handleUnexpectedConnectionDriverException(conn: Connection, exception: Throwable) {
+            override fun handleUnexpectedConnectionDriverException(
+                conn: Connection,
+                exception: Throwable
+            ) {
                 ReliableIrohaChainListener.logger.error("RMQ connection error", exception)
                 System.exit(1)
             }
@@ -81,7 +89,7 @@ class ChainAdapter(
                 logger.info { "Drop last block" }
                 lastReadBlockProvider.saveLastBlockHeight(BigInteger.ZERO)
             }
-            lastReadBlock.set(lastReadBlockProvider.getLastBlockHeight().toLong())
+            lastReadBlock = lastReadBlockProvider.getLastBlockHeight()
             val channel = connection.createChannel()
             channel.exchangeDeclare(chainAdapterConfig.irohaExchange, "fanout", true)
             logger.info { "Listening Iroha blocks" }
@@ -102,7 +110,7 @@ class ChainAdapter(
                     .subscribe({ block ->
                         publishUnreadLatch.await()
                         // Send only not read Iroha blocks
-                        if (block.blockV1.payload.height > lastReadBlock.get()) {
+                        if (block.blockV1.payload.height > lastReadBlock.toLong()) {
                             onNewBlock(channel, block)
                         }
                     }, { ex ->
@@ -167,13 +175,8 @@ class ChainAdapter(
         logger.info { "Block $height pushed" }
         // Save last read block
         lastReadBlockProvider.saveLastBlockHeight(BigInteger.valueOf(height))
-        lastReadBlock.set(height)
+        lastReadBlock = BigInteger.valueOf(height)
     }
-
-    /**
-     * Returns height of last read Iroha block
-     */
-    fun getLastReadBlock() = lastReadBlock.get()
 
     override fun close() {
         subscriberExecutorService.shutdownNow()
