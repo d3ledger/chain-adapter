@@ -23,6 +23,7 @@ import iroha.protocol.QryResponses
 import jp.co.soramitsu.iroha.java.ErrorResponseException
 import mu.KLogging
 import java.io.Closeable
+import java.math.BigInteger
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicLong
 
@@ -61,9 +62,9 @@ open class ChainAdapter(
         return Result.of {
             if (chainAdapterConfig.dropLastReadBlock) {
                 logger.info { "Drop last block" }
-                lastReadBlockProvider.saveLastBlockHeight(0)
+                lastReadBlockProvider.saveLastBlockHeight(BigInteger.ZERO)
             }
-            lastReadBlock.set(lastReadBlockProvider.getLastBlockHeight())
+            lastReadBlock.set(lastReadBlockProvider.getLastBlockHeight().toLong())
             val channel = connection.createChannel()
             channel.exchangeDeclare(chainAdapterConfig.irohaExchange, "fanout", true)
             logger.info { "Listening Iroha blocks" }
@@ -99,7 +100,7 @@ open class ChainAdapter(
      * @param channel - RabbitMQ channel that is used to publish Iroha blocks
      */
     private fun publishUnreadIrohaBlocks(channel: Channel) {
-        var lastProcessedBlock = lastReadBlockProvider.getLastBlockHeight()
+        var lastProcessedBlock = lastReadBlockProvider.getLastBlockHeight().toLong()
         var donePublishing = false
         while (!donePublishing) {
             lastProcessedBlock++
@@ -148,7 +149,7 @@ open class ChainAdapter(
         logger.info { "Block pushed" }
         val height = block.blockV1.payload.height
         // Save last read block
-        lastReadBlockProvider.saveLastBlockHeight(height)
+        lastReadBlockProvider.saveLastBlockHeight(BigInteger.valueOf(height))
         lastReadBlock.set(height)
     }
 
