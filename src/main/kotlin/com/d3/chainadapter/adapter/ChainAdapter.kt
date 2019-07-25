@@ -15,10 +15,7 @@ import com.d3.commons.sidechain.iroha.util.getErrorMessage
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Connection
-import com.rabbitmq.client.ConnectionFactory
-import com.rabbitmq.client.MessageProperties
+import com.rabbitmq.client.*
 import com.rabbitmq.client.impl.DefaultExceptionHandler
 import io.reactivex.schedulers.Schedulers
 import iroha.protocol.BlockOuterClass
@@ -50,6 +47,8 @@ open class ChainAdapter(
     private val subscriberExecutorService = createPrettySingleThreadPool(
         CHAIN_ADAPTER_SERVICE_NAME, "iroha-chain-subscriber"
     )
+    private val connection: Connection
+    private val channel: Channel
 
     init {
         // Handle connection errors
@@ -66,9 +65,17 @@ open class ChainAdapter(
         }
         connectionFactory.host = chainAdapterConfig.rmqHost
         connectionFactory.port = chainAdapterConfig.rmqPort
-    }
 
-    private val connection = connectionFactory.newConnection()
+        connection = connectionFactory.newConnection()
+        channel = connection.createChannel()
+
+        channel.exchangeDeclare(chainAdapterConfig.irohaExchange, BuiltinExchangeType.FANOUT, true)
+        chainAdapterConfig.queuesToCreate.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            .forEach { queue ->
+                channel.queueDeclare(queue, true, false, false, null)
+                channel.queueBind(queue, chainAdapterConfig.irohaExchange, "")
+            }
+    }
 
     /**
      * Initiates and runs chain adapter
@@ -81,20 +88,17 @@ open class ChainAdapter(
                 lastReadBlockProvider.saveLastBlockHeight(0)
             }
             lastReadBlock.set(lastReadBlockProvider.getLastBlockHeight())
-            val channel = connection.createChannel()
-            channel.exchangeDeclare(chainAdapterConfig.irohaExchange, "fanout", true)
             logger.info { "Listening Iroha blocks" }
-            initIrohaChainListener(channel, onIrohaListenError)
-            publishUnreadIrohaBlocks(channel)
+            initIrohaChainListener(onIrohaListenError)
+            publishUnreadIrohaBlocks()
         }
     }
 
     /**
      * Initiates Iroha chain listener logic
-     * @param channel - channel that is used to publish Iroha blocks
      * @param onIrohaListenError - function that will be called on Iroha chain listener error
      */
-    private fun initIrohaChainListener(channel: Channel, onIrohaListenError: () -> Unit) {
+    private fun initIrohaChainListener(onIrohaListenError: () -> Unit) {
         irohaChainListener.getBlockObservable()
             .map { observable ->
                 observable.subscribeOn(Schedulers.from(subscriberExecutorService))
@@ -102,7 +106,7 @@ open class ChainAdapter(
                         publishUnreadLatch.await()
                         // Send only not read Iroha blocks
                         if (block.blockV1.payload.height > lastReadBlock.get()) {
-                            onNewBlock(channel, block)
+                            onNewBlock(block)
                         }
                     }, { ex ->
                         logger.error("Error on Iroha chain listener occurred", ex)
@@ -113,9 +117,8 @@ open class ChainAdapter(
 
     /**
      * Publishes unread blocks
-     * @param channel - RabbitMQ channel that is used to publish Iroha blocks
      */
-    private fun publishUnreadIrohaBlocks(channel: Channel) {
+    private fun publishUnreadIrohaBlocks() {
         var lastProcessedBlock = lastReadBlockProvider.getLastBlockHeight()
         var donePublishing = false
         while (!donePublishing) {
@@ -123,7 +126,7 @@ open class ChainAdapter(
             logger.info { "Try read Iroha block $lastProcessedBlock" }
 
             irohaQueryHelper.getBlock(lastProcessedBlock).fold({ response ->
-                onNewBlock(channel, response.block)
+                onNewBlock(response.block)
             }, { ex ->
                 if (ex is ErrorResponseException) {
                     val errorResponse = ex.errorResponse
@@ -151,10 +154,9 @@ open class ChainAdapter(
 
     /**
      * Publishes new block to RabbitMQ
-     * @param channel - channel that is used to publish blocks
      * @param block - Iroha block to publish
      */
-    private fun onNewBlock(channel: Channel, block: BlockOuterClass.Block) {
+    private fun onNewBlock(block: BlockOuterClass.Block) {
         val message = block.toByteArray()
         channel.basicPublish(
             chainAdapterConfig.irohaExchange,
@@ -177,6 +179,7 @@ open class ChainAdapter(
     override fun close() {
         subscriberExecutorService.shutdownNow()
         irohaChainListener.close()
+        channel.close()
         connection.close()
     }
 
