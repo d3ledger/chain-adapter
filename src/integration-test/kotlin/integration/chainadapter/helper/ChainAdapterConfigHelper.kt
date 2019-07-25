@@ -1,5 +1,5 @@
 /*
- * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * Copyright D3 Ledger, Inc. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -9,9 +9,6 @@ import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.commons.config.loadRawLocalConfigs
 import java.util.*
 import kotlin.math.absoluteValue
-
-// Folder for chain-adapter test files(last read block file and etc)
-private const val LAST_READ_BLOCK_TEST_FOLDER = "deploy/chain-adapter/tests"
 
 private val random = Random()
 
@@ -37,6 +34,7 @@ class ChainAdapterConfigHelper {
             override val iroha = chainAdapterConfig.iroha
             override val lastReadBlockFilePath = chainAdapterConfig.lastReadBlockFilePath
             override val dropLastReadBlock = true
+            override val queuesToCreate = "q1 , q2, q3 ,   q4,  q5   "
         }
     }
 }
