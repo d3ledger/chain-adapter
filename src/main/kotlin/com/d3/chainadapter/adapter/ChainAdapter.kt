@@ -70,12 +70,13 @@ open class ChainAdapter(
         channel = connection.createChannel()
 
         channel.exchangeDeclare(chainAdapterConfig.irohaExchange, BuiltinExchangeType.FANOUT, true)
-        chainAdapterConfig.queuesToCreate.split(",").map { it.trim() }.forEach { queue ->
-            channel.queueDeclare(queue, true, false, false, null)
-            channel.queueBind(queue, chainAdapterConfig.irohaExchange, "")
-            //TODO not sure if it's enough
-            channel.basicQos(1)
-        }
+        chainAdapterConfig.queuesToCreate.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            .forEach { queue ->
+                channel.queueDeclare(queue, true, false, false, null)
+                channel.queueBind(queue, chainAdapterConfig.irohaExchange, "")
+                //TODO not sure if it's enough
+                channel.basicQos(1)
+            }
     }
 
     /**
