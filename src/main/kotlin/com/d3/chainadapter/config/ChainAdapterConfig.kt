@@ -28,4 +28,6 @@ interface ChainAdapterConfig {
     val dropLastReadBlock: Boolean
     // Health check port
     val healthCheckPort: Int
+    // Queues to create before starting consumer
+    val queuesToCreate: String
 }
