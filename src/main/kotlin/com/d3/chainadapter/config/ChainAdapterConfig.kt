@@ -1,5 +1,5 @@
 /*
- * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * Copyright D3 Ledger, Inc. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -28,4 +28,6 @@ interface ChainAdapterConfig {
     val dropLastReadBlock: Boolean
     // Health check port
     val healthCheckPort: Int
+    // Queues to create before starting consumer
+    val queuesToCreate: String
 }
