@@ -74,8 +74,6 @@ open class ChainAdapter(
             .forEach { queue ->
                 channel.queueDeclare(queue, true, false, false, null)
                 channel.queueBind(queue, chainAdapterConfig.irohaExchange, "")
-                //TODO not sure if it's enough
-                channel.basicQos(1)
             }
     }
 
