@@ -5,7 +5,7 @@
 
 buildscript {
     ext.kotlin_version = '1.3.10'
-    ext.notary_version = '7bc1c156b5'
+    ext.notary_version = 'b44ce46930425da0efe6e129bca61068c899faee'
     repositories {
         mavenCentral()
         jcenter()
@@ -21,6 +21,11 @@ buildscript {
 
 plugins {
     id 'jp.co.soramitsu.sora-plugin' version '0.1.2'
+    id "com.github.dolgopolovwork.testreport" version "1"
+}
+
+testReport {
+    testFolders = Arrays.asList("src/integration-test")
 }
 
 repositories {
@@ -82,11 +87,7 @@ task integrationTest(type: Test) {
     // Enable JUnit5 tests
     useJUnitPlatform {
     }
-
-    mustRunAfter test
 }
-
-check.dependsOn integrationTest
 
 configurations {
     integrationTestImplementation.extendsFrom testImplementation
@@ -125,4 +126,10 @@ compileKotlin {
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
+}
+project.afterEvaluate {
+    dockerfileCreate.dependsOn(shadowJar)
+    integrationTest.dependsOn(dockerfileCreate)
+    integrationTest.finalizedBy(d3TestReport)
+    test.finalizedBy(integrationTest)
 }

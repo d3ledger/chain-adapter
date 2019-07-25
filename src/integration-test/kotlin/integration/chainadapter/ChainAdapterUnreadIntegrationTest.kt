@@ -55,6 +55,7 @@ class ChainAdapterUnreadIntegrationTest {
                 reliableChainListener.getBlockObservable().get().subscribe { (block, _) ->
                     block.blockV1.payload.transactionsList.forEach { tx ->
                         tx.payload.reducedPayload.commandsList.forEach { command ->
+                            logger.info("Block ${block.blockV1.payload.height} with command $command")
                             if (environment.isDummyCommand(command)) {
                                 // Collect dummy transactions
                                 // Key is number of transaction
@@ -82,7 +83,10 @@ class ChainAdapterUnreadIntegrationTest {
                 //Wait a little until consumed
                 Thread.sleep(2_000)
                 logger.info { consumedTransactions }
-                assertEquals(transactionsAfterStart + transactionsAfterStart, consumedTransactions.size)
+                assertEquals(
+                    transactionsAfterStart + transactionsAfterStart,
+                    consumedTransactions.size
+                )
                 assertEquals(consumedTransactions.sorted(), consumedTransactions)
                 assertEquals(
                     adapter.getLastReadBlock(),

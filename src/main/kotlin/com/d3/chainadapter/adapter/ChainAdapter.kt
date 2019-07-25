@@ -7,11 +7,11 @@ package com.d3.chainadapter.adapter
 
 import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
 import com.d3.chainadapter.config.ChainAdapterConfig
-import com.d3.chainadapter.provider.LastReadBlockProvider
 import com.d3.commons.sidechain.iroha.IrohaChainListener
 import com.d3.commons.sidechain.iroha.ReliableIrohaChainListener
 import com.d3.commons.sidechain.iroha.util.IrohaQueryHelper
 import com.d3.commons.sidechain.iroha.util.getErrorMessage
+import com.d3.commons.sidechain.provider.LastReadBlockProvider
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
@@ -24,8 +24,9 @@ import jp.co.soramitsu.iroha.java.ErrorResponseException
 import mu.KLogging
 import org.springframework.stereotype.Component
 import java.io.Closeable
+import java.math.BigInteger
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 
 private const val BAD_IROHA_BLOCK_HEIGHT_ERROR_CODE = 3
 
@@ -34,7 +35,7 @@ private const val BAD_IROHA_BLOCK_HEIGHT_ERROR_CODE = 3
  * It reads Iroha blocks and sends them to recipients via RabbitMQ
  */
 @Component
-open class ChainAdapter(
+class ChainAdapter(
     private val chainAdapterConfig: ChainAdapterConfig,
     private val irohaQueryHelper: IrohaQueryHelper,
     private val irohaChainListener: IrohaChainListener,
@@ -42,13 +43,15 @@ open class ChainAdapter(
 ) : Closeable {
 
     private val connectionFactory = ConnectionFactory()
-    private val lastReadBlock = AtomicLong()
+
     private val publishUnreadLatch = CountDownLatch(1)
     private val subscriberExecutorService = createPrettySingleThreadPool(
         CHAIN_ADAPTER_SERVICE_NAME, "iroha-chain-subscriber"
     )
     private val connection: Connection
     private val channel: Channel
+
+    private val lastReadBlock = AtomicReference<BigInteger>(BigInteger.ZERO)
 
     init {
         // Handle connection errors
@@ -58,7 +61,10 @@ open class ChainAdapter(
                 System.exit(1)
             }
 
-            override fun handleUnexpectedConnectionDriverException(conn: Connection, exception: Throwable) {
+            override fun handleUnexpectedConnectionDriverException(
+                conn: Connection,
+                exception: Throwable
+            ) {
                 ReliableIrohaChainListener.logger.error("RMQ connection error", exception)
                 System.exit(1)
             }
@@ -85,7 +91,7 @@ open class ChainAdapter(
         return Result.of {
             if (chainAdapterConfig.dropLastReadBlock) {
                 logger.info { "Drop last block" }
-                lastReadBlockProvider.saveLastBlockHeight(0)
+                lastReadBlockProvider.saveLastBlockHeight(BigInteger.ZERO)
             }
             lastReadBlock.set(lastReadBlockProvider.getLastBlockHeight())
             logger.info { "Listening Iroha blocks" }
@@ -105,7 +111,7 @@ open class ChainAdapter(
                     .subscribe({ block ->
                         publishUnreadLatch.await()
                         // Send only not read Iroha blocks
-                        if (block.blockV1.payload.height > lastReadBlock.get()) {
+                        if (block.blockV1.payload.height > lastReadBlock.get().toLong()) {
                             onNewBlock(block)
                         }
                     }, { ex ->
@@ -125,7 +131,7 @@ open class ChainAdapter(
             lastProcessedBlock++
             logger.info { "Try read Iroha block $lastProcessedBlock" }
 
-            irohaQueryHelper.getBlock(lastProcessedBlock).fold({ response ->
+            irohaQueryHelper.getBlock(lastProcessedBlock.toLong()).fold({ response ->
                 onNewBlock(response.block)
             }, { ex ->
                 if (ex is ErrorResponseException) {
@@ -167,8 +173,8 @@ open class ChainAdapter(
         val height = block.blockV1.payload.height
         logger.info { "Block $height pushed" }
         // Save last read block
-        lastReadBlockProvider.saveLastBlockHeight(height)
-        lastReadBlock.set(height)
+        lastReadBlockProvider.saveLastBlockHeight(BigInteger.valueOf(height))
+        lastReadBlock.set(BigInteger.valueOf(height))
     }
 
     /**

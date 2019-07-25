@@ -73,7 +73,7 @@ class ChainAdapterPregeneratedQueuesIntegrationTest {
                     chainAdapter.getLastReadBlock(),
                     chainAdapter.lastReadBlockProvider.getLastBlockHeight()
                 )
-                assertEquals(consumedBlocks.last(), chainAdapter.getLastReadBlock())
+                assertEquals(consumedBlocks.last(), chainAdapter.getLastReadBlock().toLong())
             }
         }
 

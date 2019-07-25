@@ -8,14 +8,18 @@ package integration.chainadapter.environment
 import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
 import com.d3.chainadapter.adapter.ChainAdapter
 import com.d3.chainadapter.config.ChainAdapterConfig
-import com.d3.chainadapter.provider.FileBasedLastReadBlockProvider
-import com.d3.chainadapter.provider.LastReadBlockProvider
 import com.d3.commons.config.RMQConfig
 import com.d3.commons.config.loadRawLocalConfigs
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
+import com.d3.commons.sidechain.iroha.consumer.IrohaConsumer
+import com.d3.commons.sidechain.iroha.consumer.IrohaConsumerImpl
+import com.d3.commons.sidechain.iroha.util.ModelUtil
 import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
+import com.d3.commons.sidechain.provider.FileBasedLastReadBlockProvider
+import com.d3.commons.sidechain.provider.LastReadBlockProvider
 import com.d3.commons.util.createPrettySingleThreadPool
+import com.github.kittinunf.result.failure
 import integration.chainadapter.helper.ChainAdapterConfigHelper
 import integration.helper.ContainerHelper
 import integration.helper.KGenericContainerImage
@@ -24,7 +28,10 @@ import iroha.protocol.BlockOuterClass
 import iroha.protocol.Commands
 import iroha.protocol.Primitive
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
-import jp.co.soramitsu.iroha.java.*
+import jp.co.soramitsu.iroha.java.IrohaAPI
+import jp.co.soramitsu.iroha.java.QueryAPI
+import jp.co.soramitsu.iroha.java.Transaction
+import jp.co.soramitsu.iroha.java.Utils
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import jp.co.soramitsu.iroha.testcontainers.PeerConfig
 import jp.co.soramitsu.iroha.testcontainers.detail.GenesisBlockBuilder
@@ -55,7 +62,9 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
         chainAdapterConfig.irohaCredential.privkey
     )
 
+    private val dummyClientId = "client@d3"
     private val dummyClientKeyPair = Ed25519Sha3().generateKeypair()
+    private val dummyIrohaCredential = IrohaCredential(dummyClientId, dummyClientKeyPair)
 
     // Random dummy value
     private val dummyValue = random.nextInt().absoluteValue.toString()
@@ -67,6 +76,19 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
     val userDir = System.getProperty("user.dir")!!
     private val dockerfile = "$userDir/build/docker/Dockerfile"
     private val chainAdapterContextFolder = "$userDir/build/docker/"
+
+    private val irohaAPI: IrohaAPI
+
+    private val dummyIrohaConsumer: IrohaConsumer
+
+    init {
+        containerHelper.rmqContainer.start()
+        // I don't want to see nasty Iroha logs
+        irohaContainer.withLogger(null)
+        irohaContainer.start()
+        irohaAPI = irohaContainer.api
+        dummyIrohaConsumer = IrohaConsumerImpl(dummyIrohaCredential, irohaAPI)
+    }
 
     //TODO move to the main repository
     /**
@@ -82,16 +104,6 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
         )
             .withLogConsumer { outputFrame -> print(outputFrame.utf8String) }
             .withNetworkMode("host")
-    }
-
-    private val irohaAPI: IrohaAPI
-
-    init {
-        containerHelper.rmqContainer.start()
-        // I don't want to see nasty Iroha logs
-        irohaContainer.withLogger(null)
-        irohaContainer.start()
-        irohaAPI = irohaContainer.api
     }
 
     /**
@@ -126,7 +138,7 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
                 .createDomain("notary", "none")
                 .createDomain("d3", "client")
                 .createAccount("rmq@notary", rmqKeyPair.public)
-                .createAccount("client@d3", dummyClientKeyPair.public)
+                .createAccount(dummyClientId, dummyClientKeyPair.public)
                 .appendRole("rmq@notary", "rmq")
                 .build()
                 .build()
@@ -143,7 +155,7 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
                 containerHelper.rmqContainer.getMappedPort(DEFAULT_RMQ_PORT)
             )
         val irohaAPI = irohaAPI()
-        val lastReadBlockProvider = FileBasedLastReadBlockProvider(chainAdapterConfig)
+        val lastReadBlockProvider = FileBasedLastReadBlockProvider(chainAdapterConfig.lastReadBlockFilePath)
         val queryAPI =
             QueryAPI(
                 irohaAPI,
@@ -186,19 +198,12 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
      * Creates dummy transaction
      */
     fun createDummyTransaction(testKey: String = dummyValue) {
-        val transactionBuilder = Transaction
-            .builder("client@d3")
-            .setAccountDetail("client@d3", testKey, dummyValue)
-            .sign(dummyClientKeyPair)
-        irohaAPI.transaction(transactionBuilder.build())
-            .blockingSubscribe(
-                TransactionStatusObserver.builder()
-                    .onError { ex -> throw ex }
-                    .onTransactionFailed { tx -> throw Exception("${tx.txHash} has failed") }
-                    .onRejected { tx -> throw Exception("${tx.txHash} has been rejected") }
-                    .build()
-            )
-
+        ModelUtil.setAccountDetail(
+            dummyIrohaConsumer,
+            dummyClientId,
+            testKey,
+            dummyValue
+        ).failure { ex -> throw ex }
     }
 
     /**

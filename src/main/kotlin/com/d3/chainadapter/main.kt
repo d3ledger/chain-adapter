@@ -8,7 +8,6 @@
 package com.d3.chainadapter
 
 import com.d3.chainadapter.adapter.ChainAdapter
-import com.d3.chainadapter.healthcheck.HealthCheckEndpoint
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.failure
 import com.github.kittinunf.result.map
@@ -24,13 +23,11 @@ const val CHAIN_ADAPTER_SERVICE_NAME = "chain-adapter"
 )
 class ChainAdapterApp
 
-fun main(args: Array<String>) {
+fun main() {
 
     Result.of {
         AnnotationConfigApplicationContext(ChainAdapterApp::class.java)
     }.map { context ->
-        val healthCheckEndpoint = context.getBean(HealthCheckEndpoint::class.java)
-        healthCheckEndpoint.start()
         val adapter = context.getBean(ChainAdapter::class.java)
         adapter.init {
             logger.error("Iroha failure. Exit.")
