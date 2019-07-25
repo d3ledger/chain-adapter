@@ -75,8 +75,9 @@ class ChainAdapterPregeneratedQueuesIntegrationTest {
                 )
                 assertEquals(consumedBlocks.last(), chainAdapter.getLastReadBlock())
             }
-
         }
+
+        chainAdapter.close()
     }
 
     /**
