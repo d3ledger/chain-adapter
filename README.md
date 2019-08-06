@@ -17,8 +17,8 @@ Chain adapter uses `chain-adapter.properties` as a default configuration file th
 - `chain-adapter.healthCheckPort` - health check port
 - `chain-adapter.queuesToCreate` - queues that chain adapter creates on a service startup. Queue names must be separated by the comma symbol. The value is optional.
 - `chain-adapter.iroha` - Iroha host and port configuration
-- `chain-adapter.dropLastReadBlock` - as it was mentioned before, chain adapter saves last read block height. It's possible to drop height to zero on a service startup by setting this value to `true`. Good for testing purposes. 
-- `chain-adapter.irohaCredential` - credentials of an account that will be used by the service to listen to Iroha blocks. The account must have `can_get_blocks` permission.
+- `chain-adapter.dropLastReadBlock` - as it was mentioned before, chain adapter saves the last read block height. It's possible to drop height to zero on a service startup by setting this value to `true`. Good for testing purposes. 
+- `chain-adapter.irohaCredential` - credentials of the account that will be used by the service to listen to Iroha blocks. The account must have `can_get_blocks` permission.
 
 ## How to run
 Chain-adapter may be run as a docker container using the following `docker-compose` instructions:
