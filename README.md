@@ -1,4 +1,4 @@
-#Chain adapter
+# Chain adapter
 ## Service overview 
 Chain adapter is a service that is used to fetch Iroha blocks very safely. Unlike the default Iroha blockchain listener implementation, the service is capable of publishing missing blocks. 
 
