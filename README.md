@@ -58,7 +58,7 @@ The function won't have any effect if the "auto acknowledgment" mode is on. If t
 
 If you are not into Kotlin, there is a wrapper class written in Java called `ReliableIrohaChainListener4J`. It works exactly the same. 
 
-### Example
+### Examples
 Kotlin
 ```
 val listener = ReliableIrohaChainListener(rmqConfig, "queue", autoAck = false)
