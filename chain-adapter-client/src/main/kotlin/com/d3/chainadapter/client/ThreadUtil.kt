@@ -1,7 +1,5 @@
 package com.d3.chainadapter.client
 
-import com.github.kittinunf.result.flatMap
-import com.github.kittinunf.result.map
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
@@ -40,25 +38,4 @@ fun createPrettySingleThreadPool(
     purpose: String
 ): ExecutorService {
     return Executors.newSingleThreadExecutor(namedThreadFactory(serviceName, purpose))!!
-}
-
-fun main() {
-    val rmqConfig: RMQConfig = TODO()
-    val listener = ReliableIrohaChainListener(rmqConfig, "queue", autoAck = false)
-    listener.getBlockObservable().map { observable ->
-        observable.subscribe { (block, ack) ->
-            // Do something with block
-            // ...
-            // Acknowledge
-            ack()
-        }
-    }.flatMap {
-        listener.listen()
-    }.fold(
-        {
-            // On listen() success
-        },
-        { ex ->
-            // On listen() failure
-        })
 }

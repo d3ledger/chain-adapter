@@ -43,17 +43,17 @@ chain-adapter:
 ```
   
 ## How to use
-`com.d3.chainadapter.client.ReliableIrohaChainListener` is the class that is used as a client for the service. The class may be obtained via JitPack:
+`com.d3.chainadapter.client.ReliableIrohaChainListener` is the class used as a client for the service. The class may be obtained via JitPack:
 
 ```groovy
 compile "com.github.d3ledger.chain-adapter:chain-adapter-client:$chain_adapter_client_version"
 ``` 
-Typical workflow looks like the following:
+Typical workflow looks like this:
 
 1) First, you must create an instance of `ReliableIrohaChainListener` object. 
-2) Then you have to call the `getBlockObservable()` function that returns `Observable<Pair<BlockOuterClass.Block, () -> Unit>>` wrapped by `Result`(see [github.com/kittinunf/Result](https://github.com/kittinunf/Result)). The returned object may be used to register multiple subscribers.
+2) Then you have to call the `getBlockObservable()` function that returns `Observable<Pair<BlockOuterClass.Block, () -> Unit>>` wrapped in `Result`(see [github.com/kittinunf/Result](https://github.com/kittinunf/Result)). The returned object may be used to register multiple subscribers.
 The first component of `Pair` is an Iroha block itself. The second component is a function that must be called to acknowledge Iroha block delivery. 
-The function won't make any effect if the "auto acknowledgment" mode is on. If the "auto acknowledgment" mode is off, then EVERY block must be acknowledged manually.  
+The function won't have any effect if the "auto acknowledgment" mode is on. If the "auto acknowledgment" mode is off, then EVERY block must be acknowledged manually.  
 3) And finally, you have to invoke `listen()` function that starts fetching Iroha blocks. Without this call, no block will be read.
 
 If you are not into Kotlin, there is a wrapper class written in Java called `ReliableIrohaChainListener4J`. It works exactly the same. 
@@ -82,7 +82,7 @@ listener.getBlockObservable().map { observable ->
 Java
 ```
 boolean autoAck = false;
-ReliableIrohaChainListener4J listener = new ReliableIrohaChainListener4J(rmqConfig, "queue", false);
+ReliableIrohaChainListener4J listener = new ReliableIrohaChainListener4J(rmqConfig, "queue", autoAck);
 listener.getBlockObservable().subscribe((subscription) -> {
     BlockOuterClass.Block block = subscription.getBlock();
     // Do something with block
@@ -96,4 +96,4 @@ try {
     System.exit(1);
 }
 ```
-It's important to emphasize the order of calls. Calling `listen()` before defining subscribers leads to missing blocks. 
+It's important to emphasize the order of the calls. Calling `listen()` before defining subscribers will lead to missing blocks. 
