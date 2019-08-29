@@ -12,17 +12,17 @@ pipeline {
         }
     }
     stages {
-        stage('Test') {
-            steps {
-                script {
-                    sh "./gradlew clean test --info"
-                }
-            }
-        }
         stage('Build') {
             steps {
                 script {
                     sh "./gradlew clean build --info"
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                script {
+                    sh "./gradlew clean test --info"
                 }
             }
         }
