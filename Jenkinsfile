@@ -1,7 +1,7 @@
 def dockerTags = ['master': 'latest', 'develop': 'dev']
 pipeline {
     options {
-        buildDiscarder(logRotator(numToKeepStr: '20'))
+        buildDiscarder(logRotator(numToKeepStr: '30'))
         timestamps()
     }
     agent {
